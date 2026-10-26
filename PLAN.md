@@ -136,3 +136,12 @@ Completion audit additions: implement and verify the optional local analyzer,
 print layout, visible opt-in roast, bounded recognition badges and supported
 Claude message usage aggregation before final publication. These are acceptance
 items from the original brief, not a redefinition of a smaller release.
+
+## Delivery audit follow-up
+
+The owner's subsequent full review request is tracked in [docs/audit.md](docs/audit.md).
+It includes fixes for missed motion/accessibility behavior, share preview,
+offline typography, credential redaction, source attribution, Git daily/date
+semantics, coaching false positives and redirected Windows CLI output. Its fresh
+verification supersedes the initial results above. Remaining roadmap features
+and human score calibration retain their original explicit status.
