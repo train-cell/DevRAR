@@ -1,6 +1,7 @@
 """Exercise generated local HTML in an isolated headless Chromium context."""
 
 import os
+import re
 from pathlib import Path
 
 import pytest
@@ -16,6 +17,71 @@ from devrar.anafora import apothikefse_anafora
 from devrar.deigma import fortose_deigma
 
 pytestmark = pytest.mark.browser
+
+
+def test_browser_deixnei_tin_pragmatiki_methodo_analisis(tmp_path: Path) -> None:
+    """Rules mode is not a missing local run; local success shows its real method."""
+    dedomena = fortose_deigma()
+    rules = apothikefse_anafora(dedomena, tmp_path)
+    dedomena["analysi"] = {
+        "methodos": "local",
+        "katastasi": "ok",
+        "model_id": "synthetic-model",
+    }
+    topiko = apothikefse_anafora(dedomena, tmp_path)
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(rules.as_uri(), wait_until="networkidle")
+        expect(page.locator("#coverage-alert")).to_contain_text("Rules-based coaching")
+        expect(page.locator("#coverage-alert")).not_to_contain_text(
+            "Local analysis status was not recorded"
+        )
+        page.goto(topiko.as_uri(), wait_until="networkidle")
+        expect(page.locator("#coverage-alert")).to_contain_text(
+            "Local analysis complete · local · synthetic-model"
+        )
+        browser.close()
+
+
+def test_browser_proepiskopisi_share_prin_tin_apothikefsi(tmp_path: Path) -> None:
+    """Both share entries allow inspection and cancellation before saving."""
+    dedomena = fortose_deigma()
+    dedomena["projects"] = [{"onoma": "PRIVATE_CANARY", "commits": 1, "arxeia": 1}]
+    selida = apothikefse_anafora(dedomena, tmp_path)
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        lipseis: list[str] = []
+        page.on("download", lambda lipsi: lipseis.append(lipsi.suggested_filename))
+        page.goto(selida.as_uri(), wait_until="networkidle")
+        page.locator("#explore-tab").click()
+        page.locator("#share-card").click()
+        expect(page.locator("#detail-dialog")).to_be_visible()
+        expect(page.locator("#dialog-title")).to_have_text("Preview your share card")
+        proepiskopisi = page.locator(".share-preview")
+        expect(proepiskopisi).to_be_visible()
+        expect(proepiskopisi).to_contain_text("SYNTHETIC DEMO DATA")
+        assert "PRIVATE_CANARY" not in proepiskopisi.text_content()
+        assert "2026-10-12" not in proepiskopisi.text_content()
+        assert not lipseis
+        page.locator("#cancel-share").click()
+        expect(page.locator("#detail-dialog")).not_to_be_visible()
+        expect(page.locator("#share-card")).to_be_focused()
+        assert not lipseis
+        page.locator("#story-tab").click()
+        page.get_by_role("button", name="Go to chapter 9", exact=True).click()
+        page.locator("#scene-detail").click()
+        expect(page.locator("#detail-dialog")).to_be_visible()
+        expect(page.locator("#detail-dialog")).to_have_accessible_name(re.compile(".+"))
+        with page.expect_download() as lipsi:
+            page.locator("#save-share").click()
+        lipsi.value.save_as(str(tmp_path / "share.svg"))
+        expect(page.locator("#detail-dialog")).not_to_be_visible()
+        expect(page.locator("#scene-detail")).to_be_focused()
+        assert lipseis == ["devrar-share-card.svg"]
+        assert "PRIVATE_CANARY" not in (tmp_path / "share.svg").read_text()
+        browser.close()
 
 
 def test_browser_story_explore_kai_epistrofi(tmp_path: Path) -> None:
@@ -44,6 +110,23 @@ def test_browser_story_explore_kai_epistrofi(tmp_path: Path) -> None:
         page.goto(selida.as_uri(), wait_until="networkidle")
         expect(page.locator("#demo-banner")).to_be_visible()
         expect(page.locator("#scene-content")).not_to_be_empty()
+        grammata = page.evaluate(
+            """async () => {
+              const families = ["Inter", "Space Grotesk", "JetBrains Mono"];
+              await Promise.all(families.map((family) =>
+                document.fonts.load(`16px "${family}"`)));
+              return Object.fromEntries(families.map((family) => [
+                family,
+                {
+                  loaded: document.fonts.check(`16px "${family}"`),
+                  count: [...document.fonts].filter((font) =>
+                    font.family.replaceAll('"', '') === family &&
+                    font.status === "loaded").length,
+                },
+              ]));
+            }"""
+        )
+        assert all(font["loaded"] and font["count"] for font in grammata.values())
         assert page.locator(".scene-title em").evaluate(
             "el => getComputedStyle(el).color"
         ) not in ("transparent", "rgba(0, 0, 0, 0)")
@@ -53,9 +136,11 @@ def test_browser_story_explore_kai_epistrofi(tmp_path: Path) -> None:
         expect(page.locator("#scene-content")).not_to_have_text(
             arxiko, use_inner_text=True
         )
+        page.wait_for_timeout(1000)
         prin = page.locator("#scene-content").inner_text()
         page.locator("#scene-detail").click()
         expect(page.locator("#detail-dialog")).to_be_visible()
+        expect(page.locator("#detail-dialog")).to_have_accessible_name(re.compile(".+"))
         page.locator("#close-dialog").click()
         expect(page.locator("#detail-dialog")).not_to_be_visible()
         assert page.locator("#scene-content").inner_text() == prin
@@ -89,8 +174,9 @@ def test_browser_story_explore_kai_epistrofi(tmp_path: Path) -> None:
         expect(page.locator("#detail-dialog")).to_be_visible()
         page.locator("#close-dialog").click()
         page.screenshot(path=str(martyria / "desktop-explore.png"), full_page=True)
+        page.locator("#share-card").click()
         with page.expect_download() as lipsi:
-            page.locator("#share-card").click()
+            page.locator("#save-share").click()
         lipsi.value.save_as(str(martyria / "browser-share.svg"))
         karta_share = (martyria / "browser-share.svg").read_text(encoding="utf-8")
         assert "SYNTHETIC DEMO DATA" in karta_share
@@ -130,8 +216,9 @@ def test_browser_asfales_keimeno_kai_idiotiko_share(tmp_path: Path) -> None:
         page.locator('.nav-item[data-view="tools"]').click()
         expect(page.locator("#explore-cards")).to_contain_text(epithesi)
         assert page.locator("#explore-cards img").count() == 0
+        page.locator("#share-card").click()
         with page.expect_download() as lipsi:
-            page.locator("#share-card").click()
+            page.locator("#save-share").click()
         teliko = tmp_path / "private-share.svg"
         lipsi.value.save_as(str(teliko))
         karta_share = teliko.read_text(encoding="utf-8")
@@ -275,4 +362,112 @@ def test_browser_print_psisimo_kai_apotyxia_analisis(tmp_path: Path) -> None:
         page.emulate_media(media="screen")
         expect(page.locator(".sidebar")).to_be_visible()
         expect(page.locator("#explore-title")).to_contain_text("Strengths")
+        browser.close()
+
+
+def test_browser_kinisi_epanekkinisi_pafsi_kai_metrisi(tmp_path: Path) -> None:
+    """Scene reveals restart, pause freezes ambience, and stats count up accessibly."""
+    selida = apothikefse_anafora(fortose_deigma(), tmp_path)
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page(reduced_motion="no-preference")
+        page.goto(selida.as_uri(), wait_until="networkidle")
+
+        reveal = page.locator("#scene-content")
+        reveal.evaluate("el => el.getAnimations()[0].finished")
+        page.wait_for_timeout(650)
+        assert reveal.evaluate("el => el.getAnimations()[0].playState") == "finished"
+        page.locator("#next-scene").click()
+        assert reveal.evaluate("el => el.getAnimations()[0].playState") == "running"
+        page.wait_for_timeout(650)
+        page.locator("#replay-scene").click()
+        assert reveal.evaluate("el => el.getAnimations()[0].playState") == "running"
+        for _ in range(3):
+            page.locator("#next-scene").click()
+        expect(page.locator(".progress-step").nth(4)).to_have_attribute(
+            "aria-current", "step"
+        )
+
+        orbit = page.locator(".orbit-two")
+        page.locator("#play-story").click()
+        page.wait_for_timeout(180)
+        page.locator("#play-story").click()
+        clock_before = orbit.evaluate("el => el.getAnimations()[0].currentTime")
+        page.wait_for_timeout(180)
+        clock_after = orbit.evaluate("el => el.getAnimations()[0].currentTime")
+        assert clock_after == clock_before
+        star = page.locator(".starburst")
+        if star.count():
+            assert star.evaluate("el => el.getAnimations()[0].playState") == "paused"
+
+        page.locator(".progress-step").nth(2).click()
+        stat = page.locator(".scene-stat")
+        assert stat.get_attribute("aria-label") == "1,074 USER PROMPTS"
+        expect(
+            page.get_by_role("img", name="1,074 USER PROMPTS", exact=True)
+        ).to_be_visible()
+        assert (
+            float(stat.locator(".scene-stat-value").inner_text().replace(",", ""))
+            < 1074
+        )
+        page.wait_for_timeout(1100)
+        assert stat.locator(".scene-stat-value").inner_text().strip() == "1,074"
+
+        page.locator("#play-story").click()
+        page.evaluate(
+            "Object.defineProperty(document, 'hidden', "
+            "{ configurable: true, value: true })"
+        )
+        page.evaluate("document.dispatchEvent(new Event('visibilitychange'))")
+        expect(page.locator("#play-story")).to_have_attribute(
+            "aria-label", "Play story"
+        )
+        browser.close()
+
+
+def test_browser_ligoteri_kinisi_amesa_metrika_kai_agnosta(
+    tmp_path: Path,
+) -> None:
+    """Reduced motion exposes final measured values while unknown stats stay unknown."""
+    dedomena = fortose_deigma()
+    dedomena["synola"]["minimata_xristi"] = None
+    selida = apothikefse_anafora(dedomena, tmp_path)
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page(reduced_motion="reduce")
+        page.goto(selida.as_uri(), wait_until="networkidle")
+        page.locator(".progress-step").nth(1).click()
+        metrimeno = page.locator(".scene-stat")
+        megisto = max(grammi["prompts"] for grammi in dedomena["ergaleia"])
+        assert metrimeno.get_attribute("aria-label") == (
+            f"{megisto:,} RECORDED PROMPTS"
+        )
+        assert metrimeno.locator(".scene-stat-value").inner_text() == f"{megisto:,}"
+        page.locator(".progress-step").nth(2).click()
+        stat = page.locator(".scene-stat")
+        assert stat.inner_text().strip().startswith("Not recorded")
+        assert stat.get_attribute("aria-label") == "Not recorded USER PROMPTS"
+        browser.close()
+
+
+def test_browser_grafima_drastiriotitas_katholiko_kai_agnosta(
+    tmp_path: Path,
+) -> None:
+    """Source filters leave dated activity report-wide without charting null as zero."""
+    dedomena = fortose_deigma()
+    drastiriotita = dedomena["drastiriotita"]
+    assert isinstance(drastiriotita, list) and len(drastiriotita) > 1
+    drastiriotita[0]["prompts"] = None
+    selida = apothikefse_anafora(dedomena, tmp_path)
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(selida.as_uri(), wait_until="networkidle")
+        page.locator("#explore-tab").click()
+        chart = page.locator(".chart-line")
+        simeiaArxika = chart.get_attribute("points")
+        assert simeiaArxika
+        assert len(simeiaArxika.split()) == len(drastiriotita) - 1
+        page.locator("#source-filter").select_option(index=1)
+        assert chart.get_attribute("points") == simeiaArxika
         browser.close()

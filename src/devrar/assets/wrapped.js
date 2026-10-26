@@ -2,6 +2,8 @@
   "use strict";
 
   const KINISI_AUTO_MS = 6200;
+  const KINISI_METRISI_MS = 900;
+  const KATYSTERISI_ANAKLISIS_BLOB_MS = 1500;
   const MIN_POSITIVE_RECOGNITION_COUNT = 1;
   const MAX_RECOGNITION_BADGES = 3;
   const MEGISTO_EPOMENA_VIMATA = 3;
@@ -266,6 +268,7 @@
           ? `${keimeno(koryfaio, "onoma", "Your tool")}<em>led the count.</em>`
           : "Tool counts\n<em>not recorded.</em>",
         stat: koryfaio ? timi(koryfaio.prompts) : "—",
+        statValue: koryfaio?.prompts,
         unit: "RECORDED PROMPTS",
         copy: koryfaio
           ? `${keimeno(koryfaio, "onoma", "This tool")} had the highest recorded prompt count in this report.`
@@ -287,6 +290,7 @@
         kicker: "THE COUNTS",
         title: "Messages moved\n<em>through the tools.</em>",
         stat: synoloPrompts,
+        statValue: synola.minimata_xristi,
         unit: "USER PROMPTS",
         copy: `${synoloApantiseon} assistant replies · ${kliseisErgaleion} recorded tool calls. These are counts, not a measure of code quality or outcome.`,
         aside:
@@ -301,6 +305,7 @@
             ? "Activity days\n<em>not recorded.</em>"
             : `${timi(synola.imeres)}<em>active days.</em>`,
         stat: timi(synola.imeres),
+        statValue: synola.imeres,
         unit: "RECORDED DATES",
         copy: `Peak day: ${simeiosiImerominias}`,
         aside: `Timezone: ${dedomena.periodos && dedomena.periodos.zoni ? dedomena.periodos.zoni : "not recorded"} · ${drastiriotita.length} dated activity rows`,
@@ -311,6 +316,7 @@
         kicker: "AGENT WORK",
         title: "Parallel work,\n<em>counted separately.</em>",
         stat: timi(synola.ypopraktores),
+        statValue: synola.ypopraktores,
         unit: "RECORDED SUBAGENTS",
         copy: `Root sessions: ${timi(synola.rizikes)} · all sessions: ${timi(synola.synedries)}.`,
         aside:
@@ -326,6 +332,7 @@
           ? `${timi(synola.commits)} commits<em> across ${epilegmenaProjects} projects.</em>`
           : "Project totals\n<em>not recorded.</em>",
         stat: timi(synola.commits),
+        statValue: synola.commits,
         unit: "RECORDED COMMITS",
         copy: erga.length
           ? `Counts from selected repositories. ${eurosGit()}.`
@@ -453,7 +460,11 @@
     const periexomeno = stoixeia("scene-content");
     const grammi = skiniData[katastasi.skini];
     skiniContainer.dataset.scene = String(katastasi.skini);
+    skiniContainer.classList.toggle("is-paused", katastasi.paused);
     periexomeno.replaceChildren();
+    periexomeno.classList.remove("is-revealing");
+    void periexomeno.offsetWidth;
+    periexomeno.classList.add("is-revealing");
     asto(periexomeno, "div", "scene-kicker", grammi.kicker);
     const titlos = asto(periexomeno, "h1", "scene-title");
     grammi.title.split("\n").forEach((grammiKeimenou) => {
@@ -473,7 +484,22 @@
         titlos.append(komvos);
       });
     });
-    if (grammi.stat) asto(periexomeno, "div", "scene-stat", grammi.stat);
+    if (grammi.stat) {
+      const stat = asto(periexomeno, "div", "scene-stat");
+      const finalValue = Number(grammi.statValue);
+      const metrimeniTimi =
+        grammi.statValue !== null &&
+        grammi.statValue !== undefined &&
+        Number.isFinite(finalValue);
+      stat.setAttribute("role", "img");
+      stat.setAttribute(
+        "aria-label",
+        `${metrimeniTimi ? arithmos(finalValue) : grammi.stat} ${grammi.unit || ""}`.trim(),
+      );
+      asto(stat, "span", "scene-stat-value", grammi.stat);
+      if (metrimeniTimi && !window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+        metriseStat(stat.firstElementChild, finalValue);
+    }
     if (grammi.unit && grammi.stat)
       asto(periexomeno.lastElementChild, "small", "", grammi.unit);
     asto(periexomeno, "p", "scene-copy", grammi.copy);
@@ -504,6 +530,18 @@
     emfaniseProodo();
     stoixeia("sr-status").textContent =
       `Chapter ${katastasi.skini + 1} of ${skiniData.length}: ${grammi.kicker}`;
+  }
+
+  /** Counts a measured story value up to its exact formatted total. */
+  function metriseStat(stoixeio, telikiTimi) {
+    const arxikosXronos = performance.now();
+    const metrise = (trexonXronos) => {
+      const proodos = Math.min((trexonXronos - arxikosXronos) / KINISI_METRISI_MS, 1);
+      stoixeio.textContent = arithmos(Math.round(telikiTimi * proodos));
+      if (proodos < 1) window.requestAnimationFrame(metrise);
+      else stoixeio.textContent = arithmos(telikiTimi);
+    };
+    window.requestAnimationFrame(metrise);
   }
 
   /** Adds up to three positive, recorded-fact badges to the recognition chapter. */
@@ -574,6 +612,7 @@
     window.clearTimeout(katastasi.timer);
     katastasi.timer = null;
     katastasi.paused = true;
+    stoixeia("story-stage").classList.add("is-paused");
     stoixeia("play-story").textContent = "▶ Play";
     stoixeia("play-story").setAttribute("aria-label", "Play story");
   }
@@ -699,8 +738,13 @@
       grammiKeimenou.setAttribute("class", "chart-grid");
       stoixeioSvg.append(grammiKeimenou);
     });
-    const grammesPigwn = katastasi.pigi === "all" ? drastiriotita : [];
-    const times = grammesPigwn.map((grammi) => Number(grammi.prompts) || 0);
+    const grammesPigwn = drastiriotita.filter(
+      (grammi) =>
+        grammi.prompts !== null &&
+        grammi.prompts !== undefined &&
+        Number.isFinite(Number(grammi.prompts)),
+    );
+    const times = grammesPigwn.map((grammi) => Number(grammi.prompts));
     if (times.length) {
       const megisto = Math.max(1, ...times);
       const syntetagmenes = times.map(
@@ -726,9 +770,7 @@
         karta,
         "span",
         "metric-caption",
-        katastasi.pigi === "all"
-          ? "No dated activity recorded."
-          : "Date aggregates are not available per source; this chart shows all-source data only.",
+        "No recorded prompt totals for dated activity.",
       );
     karta.prepend(stoixeioSvg);
     karta.addEventListener("click", () =>
@@ -939,6 +981,8 @@
         : null;
     if (!analisiTopiki)
       minimataKalypsis.push("Local analysis status was not recorded.");
+    else if (analisiTopiki.methodos === "rules")
+      minimataKalypsis.push("Rules-based coaching · candidate observations.");
     else if (analisiTopiki.katastasi === "failed") {
       const aitia = keimeno(
         analisiTopiki,
@@ -951,7 +995,7 @@
     } else if (analisiTopiki.katastasi === "ok") {
       const methodos = keimeno(
         analisiTopiki,
-        "methodoslocal",
+        "methodos",
         "method not recorded",
       );
       const modelo = keimeno(analisiTopiki, "model_id", keimeno(analisiTopiki, "modelo"));
@@ -1250,7 +1294,7 @@
     katastasi.dialogReturn = energopoiitis || document.activeElement;
     const soma = stoixeia("dialog-body");
     soma.replaceChildren();
-    asto(soma, "h2", "dialog-title", stoixeio.titlos);
+    asto(soma, "h2", "dialog-title", stoixeio.titlos).id = "dialog-title";
     asto(
       soma,
       "div",
@@ -1423,8 +1467,8 @@
       katastasi.dialogReturn.focus();
   }
 
-  /** Downloads a share SVG containing only allowlisted report-wide aggregates. */
-  function apothikefseKartaKoinopoiisis() {
+  /** Builds a share SVG containing only allowlisted report-wide aggregates. */
+  function ftiakseKartaKoinopoiisis() {
     const stoixeioSvg = document.createElementNS(SVG_XOROS, "svg");
     stoixeioSvg.setAttribute("xmlns", SVG_XOROS);
     stoixeioSvg.setAttribute("width", "1080");
@@ -1477,6 +1521,11 @@
       etiketa.textContent = "SYNTHETIC DEMO DATA";
       stoixeioSvg.append(etiketa);
     }
+    return stoixeioSvg;
+  }
+
+  /** Downloads the same aggregate SVG that the user inspected in the preview. */
+  function apothikefseKartaKoinopoiisis(stoixeioSvg) {
     const arxeioBlob = new Blob([new XMLSerializer().serializeToString(stoixeioSvg)], {
       type: "image/svg+xml;charset=utf-8",
     });
@@ -1487,13 +1536,53 @@
     document.body.append(syndesmos);
     syndesmos.click();
     syndesmos.remove();
-    window.setTimeout(() => URL.revokeObjectURL(urlTopikisLipsis), 1500);
+    window.setTimeout(
+      () => URL.revokeObjectURL(urlTopikisLipsis),
+      KATYSTERISI_ANAKLISIS_BLOB_MS,
+    );
+  }
+
+  /** Lets the user inspect or cancel an aggregate-only export before download. */
+  function anoixeProepiskopisiKoinopoiisis(energopoiitis) {
+    pausaIstoria();
+    katastasi.dialogReturn = energopoiitis;
+    const soma = stoixeia("dialog-body");
+    soma.replaceChildren();
+    asto(soma, "h2", "dialog-title", "Preview your share card").id = "dialog-title";
+    asto(
+      soma,
+      "p",
+      "dialog-description",
+      "Only report-wide aggregate totals are included. Project names, private excerpts and exact dates stay out. Inspect the card before saving it.",
+    );
+    const karta = ftiakseKartaKoinopoiisis();
+    karta.classList.add("share-preview");
+    karta.setAttribute("role", "img");
+    karta.setAttribute("aria-label", "Aggregate DevRAR share card preview");
+    soma.append(karta);
+    const xeiristiria = asto(soma, "div", "share-preview-actions");
+    const akyrosi = asto(xeiristiria, "button", "scene-pill", "Cancel");
+    akyrosi.id = "cancel-share";
+    akyrosi.type = "button";
+    akyrosi.addEventListener("click", kleiseLeptomereia);
+    const apothikefsi = asto(xeiristiria, "button", "share-button", "Save SVG");
+    apothikefsi.id = "save-share";
+    apothikefsi.type = "button";
+    apothikefsi.addEventListener("click", () => {
+      apothikefseKartaKoinopoiisis(karta);
+      kleiseLeptomereia();
+    });
+    stoixeia("detail-dialog").showModal();
+    akyrosi.focus();
   }
 
   /** Wires view navigation, story controls, dialog, keyboard and mobile gestures. */
   function syndeseXeiristiria() {
     stoixeia("period-text").textContent = periodos();
     stoixeia("demo-banner").hidden = dedomena.leitourgia !== "demo";
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) pausaIstoria();
+    });
     const keimenoPeiragmatos =
       typeof dedomena.afigisi_roast === "string"
         ? dedomena.afigisi_roast.trim()
@@ -1534,6 +1623,7 @@
     stoixeia("play-story").addEventListener("click", () => {
       if (katastasi.paused) {
         katastasi.paused = false;
+        stoixeia("story-stage").classList.remove("is-paused");
         stoixeia("play-story").textContent = "Ⅱ Pause";
         stoixeia("play-story").setAttribute("aria-label", "Pause story");
         katastasi.timer = window.setTimeout(
@@ -1545,7 +1635,7 @@
     stoixeia("scene-detail").addEventListener("click", () => {
       const grammi = skiniData[katastasi.skini];
       if (grammi.action === "share") {
-        apothikefseKartaKoinopoiisis();
+        anoixeProepiskopisiKoinopoiisis(stoixeia("scene-detail"));
         return;
       }
       anoixeLeptomereia(grammi.detail, stoixeia("scene-detail"));
@@ -1554,9 +1644,8 @@
       katastasi.pigi = symvan.currentTarget.value;
       emfaniseExplore();
     });
-    stoixeia("share-card").addEventListener(
-      "click",
-      apothikefseKartaKoinopoiisis,
+    stoixeia("share-card").addEventListener("click", () =>
+      anoixeProepiskopisiKoinopoiisis(stoixeia("share-card")),
     );
     stoixeia("close-dialog").addEventListener("click", kleiseLeptomereia);
     stoixeia("detail-dialog").addEventListener("click", (symvan) => {

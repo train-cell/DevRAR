@@ -335,7 +335,25 @@ button {
   width: min(820px, 100%);
   position: relative;
   z-index: 1;
+}
+.scene-content.is-revealing {
   animation: sceneIn var(--reveal) cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.story-stage.is-paused .orbit-two,
+.story-stage.is-paused .starburst {
+  animation-play-state: paused;
+}
+.share-preview {
+  display: block;
+  width: min(100%, 320px);
+  height: auto;
+  margin: 20px auto;
+}
+.share-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
 }
 .scene-kicker {
   font: 900 10px/1.3 monospace;
