@@ -2,10 +2,27 @@
 
 import hashlib
 import json
+import os
 import subprocess
+import sys
 from pathlib import Path
 
 from devrar.cli import kyria
+
+
+def test_cli_elliniki_diadromi_me_periorismeni_kodikopoiisi(tmp_path: Path) -> None:
+    """Redirected Windows output must not fail after writing a Greek report path."""
+    exodos = tmp_path / "αναφορά"
+    perivallon = dict(os.environ, PYTHONIOENCODING="cp1252")
+    apotelesma = subprocess.run(
+        [sys.executable, "-m", "devrar", "wrap", "--demo", "--output", str(exodos)],
+        capture_output=True,
+        env=perivallon,
+        check=False,
+    )
+    assert apotelesma.returncode == 0, apotelesma.stderr
+    assert len(list(exodos.glob("run-*/index.html"))) == 1
+    assert b"Report created:" in apotelesma.stdout
 
 
 def test_idiotika_reports_aginountai_apo_to_git(tmp_path: Path) -> None:

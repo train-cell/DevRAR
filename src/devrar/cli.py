@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import io
 import logging
 import sys
 from collections.abc import Mapping, Sequence
@@ -182,6 +183,9 @@ def _epikyrone_epiloges(
 
 def kyria(orismata: Sequence[str] | None = None) -> int:
     """Επικυρώνει τα ορίσματα και δημιουργεί demo ή live report."""
+    for rohi in (sys.stdout, sys.stderr):
+        if isinstance(rohi, io.TextIOWrapper):
+            rohi.reconfigure(errors="backslashreplace")
     analytis = _ftiaxe_analytis()
     energes_epiloges = list(orismata) if orismata is not None else sys.argv[1:]
     if not energes_epiloges:
