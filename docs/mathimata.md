@@ -15,3 +15,15 @@ content and do not install observers or alter another application's settings.
 
 Scope: DevRAR only. These observations guide regression protection, not automatic
 assessment of any developer's ability.
+
+## Delivery audit observations
+
+Scope: project. These four new observations come from synthetic reproductions
+and the delivery audit; no background observer or global rule is installed.
+
+| Trigger | Action | Domain | Confidence | Evidence |
+|---|---|---|---|---|
+| otan_elegxeis_animation_controls | Assert actual animation play state and clock progression, not only button labels | testing | 0.9 | Replay and Pause controls passed earlier checks while CSS reveals did not restart and ambient motion continued |
+| otan_filtrareis_stream_me_orio_eggrafis | Test alternating valid/invalid records and preserve the next record boundary | data-parsing | 0.9 | A date-filter fix skipped the next valid Git header; an alternating fixture caught it |
+| otan_katharizeis_assigned_credentials | Exercise quoted keys, quoted values with spaces and known-token formats | security | 0.9 | JSON keys and spaced passwords bypassed the original assignment redactor |
+| otan_cli_typonei_diadromes | Exercise a real subprocess with Unicode paths and a restricted redirected encoding | testing | 0.9 | CP1252 output raised UnicodeEncodeError after the report was already written |

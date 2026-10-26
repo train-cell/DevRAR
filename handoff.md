@@ -62,6 +62,11 @@ initial acceptance checks. Current source and checks are on PR #1.
   Implementation evidence: https://github.com/train-cell/DevRAR/actions/runs/40398383268.
   Those URLs document the initial implementation. The audit push's current-head
   checks are verified separately before handoff and shown on the pull request.
+- Audited code `7ab1d18` passed all five GitHub jobs, including ten browser tests:
+  https://github.com/train-cell/DevRAR/actions/runs/40403248485.
+  A second fresh public clone at that revision passed the README installation
+  and demo; all eight artifacts, source import and Git ignore guard were checked,
+  and Git status stayed clean. The documentation follow-up changes no product code.
 - A separate headless Chromium 151 smoke traversed all nine chapters at 1440x1000:
   278 frame intervals, p95 16.8 ms, max 33.4 ms, no interval above 50 ms and no
   unexpected layout shift. One 111 ms long task was recorded. These are local

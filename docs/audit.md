@@ -26,7 +26,7 @@ uncalibrated scores or claim that roadmap adapters already exist.
 - [x] Offline typography, assets and packaging match the visual brief.
 - [x] CLI, renderer, private artifacts and share behavior reviewed.
 - [x] Independent acceptance review of the resulting changes.
-- [ ] Fresh integrated checks, installed demo and current-head GitHub CI pass.
+- [x] Fresh integrated checks, installed demo and audited-code GitHub CI pass.
 
 ## Confirmed defects and corrections
 
@@ -54,6 +54,23 @@ diffs and integrated the fixes. Source data used for this audit was synthetic.
 Final integrated results and package-installation evidence are recorded in
 [handoff.md](../handoff.md). Current-head checks are attached to
 [PR #1](https://github.com/train-cell/DevRAR/pull/1); agents do not merge it.
+
+- Local Windows/Python 3.11: 248 passed, two expected skips, 100% line coverage
+  across 1,910 statements. Ruff, strict mypy and JavaScript syntax passed.
+- Ten Chromium tests passed, including the exact animation, accessibility,
+  chart, font and sharing behaviors listed above.
+- Final wheel and sdist built. A new runtime-only environment ran the CLI
+  outside the source tree; all 20 packaged files matched source bytes.
+- A fresh public clone at `7ab1d18` installed from README instructions, generated
+  all eight artifacts, imported from its own source, verified its private ignore
+  guard and retained a clean working tree.
+- [Audited code CI](https://github.com/train-cell/DevRAR/actions/runs/40403248485)
+  passed all five jobs at `7ab1d18`: Linux/Windows on Python 3.11/3.12 plus
+  Chromium. This documentation follow-up does not change product source; its
+  current-head checks remain visible on the PR.
+
+Readiness: the audited v0.1 is installable and ready for owner review. The later
+capabilities below and human score-calibration work are not claimed complete.
 
 ## Boundaries that remain explicit
 
