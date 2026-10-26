@@ -107,6 +107,24 @@ def test_anafora_csp_pinarei_to_embedded_javascript(tmp_path: Path) -> None:
     assert f"'sha256-{apotypoma}'" in politiki
 
 
+def test_grammatoseires_einai_offline_me_adeies(tmp_path: Path) -> None:
+    """The portable report includes real WOFF2 fonts and redistribution notices."""
+    selida = apothikefse_anafora(fortose_deigma(), tmp_path).read_text(encoding="utf-8")
+    grammatoseires = re.findall(
+        r"url\(data:font/woff2;base64,([A-Za-z0-9+/=]+)\)", selida
+    )
+    assert len(grammatoseires) == 3
+    assert all(
+        base64.b64decode(grammatoseira).startswith(b"wOF2")
+        for grammatoseira in grammatoseires
+    )
+    assert "font-src data:" in selida
+    assert "SIL OPEN FONT LICENSE Version 1.1" in selida
+    assert "The Inter Project Authors" in selida
+    assert "The Space Grotesk Project Authors" in selida
+    assert "The JetBrains Mono Project Authors" in selida
+
+
 def test_share_deigma_dilonei_synthetika(tmp_path: Path) -> None:
     """Every share export from demo mode visibly identifies synthetic data."""
     selida_arxeio = apothikefse_anafora(fortose_deigma(), tmp_path)

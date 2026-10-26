@@ -14,6 +14,7 @@ A private, local-first recap of your work with coding agents. Start in your term
 - Source coverage and missing-data explanations instead of invented statistics.
 - Five workflow dimensions with cited prompt signals, attribution and alternative explanations.
 - Source filters, charts, detail panels, keyboard controls, replay and reduced motion.
+- Accessible count-up reveals, working motion pause and preview before saving a share card.
 - Private Markdown/JSON evidence artifacts and an aggregate-only SVG share card.
 - An explicitly synthetic demo that never reads your private history.
 - Optional local-model coaching with validated citations and no cloud fallback.
@@ -114,8 +115,8 @@ Read [the product brief](DevRAR.md), [the visual brief](DESIGN-BRIEF.md), [the i
 
 Debra is the selected narrator/persona reference. This preview uses original text and a typographic “D” treatment; no television screenshots, clips, actor likenesses or third-party character artwork are bundled.
 
-The shipped UI, inline SVG artwork and synthetic preview are project-authored. No font files or vendor artwork are distributed. See [asset provenance](docs/assets.md).
+The shipped UI, inline SVG artwork and synthetic preview are project-authored. Inter, Space Grotesk and JetBrains Mono are bundled with their OFL notices and embedded in each offline HTML report. No vendor artwork is distributed. See [asset provenance](docs/assets.md).
 
 ## License
 
-MIT, for the code in this repository. See [LICENSE](LICENSE). Third-party assets, if added, require their own provenance and applicable license.
+MIT for the code in this repository; bundled fonts use SIL OFL 1.1. See [LICENSE](LICENSE) and [asset provenance](docs/assets.md). Additional third-party assets require their own provenance and applicable license.

@@ -23,7 +23,12 @@ MEGISTES_PROSPATHIES = 5
 CSP_POLICY_TEMPLATE = (
     "default-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; "
     "script-src {hash}; style-src 'unsafe-inline'; "
-    "img-src data: blob:; media-src blob:; font-src 'none'; connect-src 'none'"
+    "img-src data: blob:; media-src blob:; font-src data:; connect-src 'none'"
+)
+GRAMMATOSEIRES = (
+    ("Inter", "InterVariable.woff2", "Inter-OFL.txt", "100 900"),
+    ("Space Grotesk", "SpaceGrotesk.woff2", "SpaceGrotesk-OFL.txt", "300 700"),
+    ("JetBrains Mono", "JetBrainsMono-Regular.woff2", "JetBrainsMono-OFL.txt", "400"),
 )
 AnaforaDedom: TypeAlias = dict[str, object]
 Metrika: TypeAlias = dict[str, object]
@@ -434,6 +439,21 @@ def apothikefse_anafora(
     protypo = poroi.joinpath("report.html").read_text(encoding="utf-8")
     styl = poroi.joinpath("wrapped.css").read_text(encoding="utf-8")
     skript = poroi.joinpath("wrapped.js").read_text(encoding="utf-8")
+    for onoma, arxeio, adeia, varos in GRAMMATOSEIRES:
+        grammatoseira = base64.b64encode(
+            poroi.joinpath("fonts", arxeio).read_bytes()
+        ).decode("ascii")
+        keimeno_adeias = poroi.joinpath("fonts", adeia).read_text(encoding="utf-8")
+        styl += (
+            f"\n/* {keimeno_adeias} */\n"
+            f'@font-face {{font-family:"{onoma}";font-style:normal;'
+            f"font-weight:{varos};font-display:swap;"
+            f"src:url(data:font/woff2;base64,{grammatoseira}) format('woff2');}}\n"
+        )
+    styl += (
+        '\n.scene-title {font-family:"Space Grotesk",Inter,sans-serif;}\n'
+        '.scene-stat,.metric-value {font-family:"JetBrains Mono",monospace;}\n'
+    )
 
     # Inject trusted assets and policy first; JSON data is substituted last so
     # imported strings resembling template tokens cannot trigger replacements.
