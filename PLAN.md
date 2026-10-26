@@ -98,15 +98,15 @@ Owns packaging, schema, synthetic demo, renderer, rules-based recognition/coachi
 
 - [x] Write renderer/output/security tests and observe RED.
 - [x] Implement renderer and clearly synthetic demo, preserving the frozen schema.
-- [ ] Integrate workers; run full pytest, package installation/build and browser interaction checks.
+- [x] Integrate workers; run full pytest, package installation/build and browser interaction checks.
 - [x] Inspect desktop/mobile screenshots, verify no external requests and save proof locally.
 - [x] Independent Luna review and necessary fixes.
-- [ ] Create public GitHub repository and feature-branch PR once authenticated; do not merge.
-- [ ] Save handoff with actual coverage, validation results and remaining work.
+- [x] Create public GitHub repository and feature-branch PR once authenticated; do not merge.
+- [x] Save handoff with actual coverage, validation results and remaining work.
 
 ## Definition of this delivery
 
-A user can install the project, run devrar wrap --demo --open, get a distinctive working HTML experience, and run supported local inputs with visible provenance. No overall programmer grade or production readiness claim is invented. Public publishing is separately reported if credentials remain unavailable.
+A user can install the project, run devrar wrap --demo --open, get a distinctive working HTML experience, and run supported local inputs with visible provenance. No overall programmer grade or production readiness claim is invented. Public installation and all five CI jobs passed; [PR #1](https://github.com/train-cell/DevRAR/pull/1) remains open for owner review.
 
 ## Goal continuation — 26 October 2026
 

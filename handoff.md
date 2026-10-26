@@ -8,6 +8,8 @@ tags: [feature, handoff]
 Workspace: `C:/Users/skyd3/antigarvity/DevRAR`.
 Repository: https://github.com/train-cell/DevRAR.
 Branch: `codex/initial-mvp`. Agents must not merge it.
+Pull request: https://github.com/train-cell/DevRAR/pull/1 (open, attached to the chat).
+Verified implementation commit: `1f61f1b44f29e0f4d3369b7fa06e721012b32920`.
 
 ## Verified implementation
 
@@ -25,7 +27,7 @@ Branch: `codex/initial-mvp`. Agents must not merge it.
 - [x] Offline HTML, Markdown, JSON/JSONL/run metadata and aggregate-only SVG.
   Every run creates its Git ignore guard before writing private evidence.
 - [x] Independent review, native-source spot-checks, package build and local installation.
-- [ ] Publish feature branch/PR and verify the public installation path and GitHub CI.
+- [x] Publish feature branch/PR and verify the public installation path and GitHub CI.
 
 ## Validation
 
@@ -42,9 +44,24 @@ Branch: `codex/initial-mvp`. Agents must not merge it.
   Timeout, malformed-output and attribution failures also preserved a clear partial report.
 - Two bounded native Codex samples matched independent human/canonical reply
   counts and source hashes remained unchanged. Native data is not committed.
-- Wheel and sdist built. A clean virtual environment ran the installed CLI from
-  outside the source tree; package resources matched source bytes. The final
-  rebuilt wheel and public clone path are checked again before publication completes.
+- Final wheel and sdist built. A clean virtual environment ran the installed CLI
+  outside the source tree; all 14 package files matched source bytes, and the
+  generated private ignore guard was verified.
+- A fresh clone of the public implementation branch followed the README's venv,
+  editable installation and demo commands successfully, with only runtime
+  dependencies installed. All eight expected artifacts existed, the package
+  imported from that clone, and its Git working tree stayed clean after the run.
+- GitHub Actions passed all five jobs: Linux/Windows with Python 3.11/3.12,
+  including Ruff, strict mypy, full coverage, build and demo, plus Chromium.
+  Implementation evidence: https://github.com/train-cell/DevRAR/actions/runs/40398383268.
+  Current checks are available on the pull request.
+- A separate headless Chromium 151 smoke traversed all nine chapters at 1440x1000:
+  278 frame intervals, p95 16.8 ms, max 33.4 ms, no interval above 50 ms and no
+  unexpected layout shift. One 111 ms long task was recorded. These are local
+  observations, not a performance guarantee or a physical-device benchmark.
+
+Final wheel SHA256:
+`293e88bacd9d657a2fa14eac711c6ad5bae1e7efdbad151a5833edc3d5026f99`.
 
 ## Limits
 
@@ -59,9 +76,14 @@ explicitly bounded sample. Automated redaction does not imply anonymization.
 
 ## NEXT_STEP_TO_EXECUTE
 
-Commit and push `codex/initial-mvp`, create and attach its pull request without
-merging, then run the README installation from a fresh public clone and verify
-all GitHub checks. Record URLs and final evidence here.
+Owner review of PR #1 and a personal pilot with explicitly selected local
+sources. Merge is the owner's action. The implementation branch is usable now
+through the README installation instructions. No package-registry publication
+or tagged release is claimed.
+
+Human pilot feedback on the narrative and coaching remains useful before
+expanding adapters or calibrating numerical scores. Physical-device performance
+benchmarking and accessibility certification are not claimed by browser tests.
 
 Read PLAN.md, docs/report-schema.md, docs/rubric.md and docs/acceptance.md.
 No database migration, cloud key, automatic model download or background tracker
