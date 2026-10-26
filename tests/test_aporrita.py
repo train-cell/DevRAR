@@ -34,3 +34,19 @@ def test_katharise_aporrita_kryvei_github_pat() -> None:
 
     assert kleidi not in katharo
     assert "[REDACTED]" in katharo
+
+
+def test_katharise_aporrita_kryvei_timi_se_quotes_me_kena() -> None:
+    """Τα quoted credentials με κενά δεν αφήνουν τμήμα τους στο excerpt."""
+    assert katharise_aporrita('password="two words here"') == "password=[REDACTED]"
+    assert katharise_aporrita("api_key='one more secret'") == "api_key=[REDACTED]"
+
+
+def test_katharise_aporrita_kryvei_json_kleidia() -> None:
+    """Καλύπτει quoted JSON property names με απλά ή σύνθετα credentials."""
+    keimeno = '{"password": "two words here", "api_key": "synthetic secret"}'
+
+    katharo = katharise_aporrita(keimeno)
+
+    assert "two words here" not in katharo
+    assert "synthetic secret" not in katharo

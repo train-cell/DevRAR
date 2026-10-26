@@ -1060,6 +1060,44 @@ def test_syllogi_codex_reply_xoris_turn_linkage_dilonei_ambiguous(
     )
 
 
+def test_syllogi_codex_plaisio_xoris_turn_id_den_kleronomei_tautotita(
+    tmp_path: Path,
+) -> None:
+    """Νέο context χωρίς ID δεν κληρονομεί προηγούμενο turn ID."""
+    arxeio = tmp_path / "codex-turn-reset.jsonl"
+    grapse_jsonl(
+        arxeio,
+        [
+            {"type": "session_meta", "payload": {"id": "s1"}},
+            {"type": "turn_context", "payload": {"turn_id": "turn-a"}},
+            {"type": "turn_context", "payload": {}},
+            {
+                "type": "response_item",
+                "id": "canonical",
+                "payload": {
+                    "type": "message",
+                    "role": "assistant",
+                    "content": [{"type": "output_text", "text": "same text"}],
+                },
+            },
+            {
+                "type": "event_msg",
+                "payload": {"type": "agent_message", "message": "same text"},
+            },
+        ],
+    )
+
+    apotelesma = syllexe_dedomena(["codex"], {"codex": arxeio}, [])
+
+    assert apotelesma["synola"]["apantiseis"] is None
+    assert apotelesma["piges"][0]["katastasi"] == "partial"
+    assert apotelesma["montela"] == []
+    assert any(
+        "Codex assistant reply attribution is ambiguous" in note
+        for note in apotelesma["simeioseis"]
+    )
+
+
 def test_syllogi_record_identity_uses_source_specific_call_ids() -> None:
     """Claude IDs stay raw; Codex output IDs are namespaced from call IDs."""
     assert _tautotita_eggrafis({}, {"call_id": "claude-tool"}, "claude") == (
@@ -2036,6 +2074,70 @@ def test_syllogi_git_repository_xoris_git_markarei_partial(tmp_path: Path) -> No
         "eos": None,
     }
     assert apotelesma["simeioseis"] == ["Git: 1 repositories δεν ήταν αναγνώσιμα."]
+
+
+def test_syllogi_git_agnosti_imerominies_den_xanoun_epomena_headers(
+    tmp_path: Path,
+    monkeypatch: ElegxosAllagis,
+) -> None:
+    """Άγνωστες Git author dates αποκλείονται και σημαίνουν partial με date filter."""
+    apothikio = tmp_path / "synthetic-repository"
+    apothikio.mkdir()
+
+    def ftiakse_git_apotelesma(
+        entoli: list[str],
+        check: bool,
+        capture_output: bool,
+        text: bool,
+        encoding: str,
+        timeout: int,
+    ) -> subprocess.CompletedProcess[str]:
+        if "log" in entoli:
+            stdout = (
+                "0123456789abcdef0123456789abcdef01234567\x1fDev\x1f"
+                "dev@example.test\x1fnot-a-date\n"
+                "abcdef0123456789abcdef0123456789abcdef01\x1fDev\x1f"
+                "dev@example.test\x1f2026-03-01T00:00:00+00:00\n"
+                "fedcba9876543210fedcba9876543210fedcba98\x1fDev\x1f"
+                "dev@example.test\x1fstill-not-a-date\n"
+                "1234567890abcdef1234567890abcdef12345678\x1fDev\x1f"
+                "dev@example.test\x1f2026-04-01T00:00:00+00:00\n"
+                "0fedcba9876543210fedcba9876543210fedcba9\x1fDev\x1f"
+                "dev@example.test\x1ffinal-unknown-date\n"
+            )
+        else:
+            stdout = "tracked.txt\x00"
+        return subprocess.CompletedProcess(entoli, 0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr("devrar.syllogi.subprocess.run", ftiakse_git_apotelesma)
+    apotelesma = syllexe_dedomena(
+        [], {}, [apothikio], apo=date(2026, 1, 1), eos=date(2026, 12, 31)
+    )
+
+    assert apotelesma["synola"]["commits"] == 2
+    assert apotelesma["projects"][0]["commits"] == 2
+    assert [bucket["imerominia"] for bucket in apotelesma["drastiriotita"]] == [
+        "2026-03-01",
+        "2026-04-01",
+    ], apotelesma["drastiriotita"]
+    assert apotelesma["piges"][0]["periodos_diathesimon"] == {
+        "apo": "2026-03-01",
+        "eos": "2026-04-01",
+    }
+    assert apotelesma["piges"][0]["katastasi"] == "partial"
+    assert apotelesma["piges"][0]["sfalmata"] == 3
+    assert "unknown timestamps were excluded" in apotelesma["simeioseis"][0]
+
+    apotelesma_xoris_filtrou = syllexe_dedomena([], {}, [apothikio])
+    assert apotelesma_xoris_filtrou["synola"]["commits"] == 5
+    assert apotelesma_xoris_filtrou["piges"][0]["katastasi"] == "ok"
+    assert len(apotelesma_xoris_filtrou["drastiriotita"]) == 2
+
+    apotelesma_xoris_author = syllexe_dedomena(
+        [], {}, [apothikio], apo=date(2026, 1, 1), author="other"
+    )
+    assert apotelesma_xoris_author["synola"]["commits"] == 0
+    assert apotelesma_xoris_author["piges"][0]["katastasi"] == "ok"
 
 
 def test_syllogi_git_malformatted_header_is_skipped_safely(

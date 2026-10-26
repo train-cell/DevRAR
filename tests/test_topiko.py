@@ -1139,6 +1139,42 @@ def test_epikyrwse_apotelesma_aporriptei_model_authored_human_attribution(
         topiko_modulo._epikyrwse_apotelesma(proposed, [row_tool])
 
 
+def test_epikyrwse_apotelesma_counts_source_session_pairs_as_episodes() -> None:
+    """Same session IDs from different sources are separate evidence episodes."""
+    rows = [
+        {
+            "id": "prompt-a",
+            "role": "user",
+            "kind": "prompt",
+            "excerpt": "acceptance criteria",
+            "_source": "Source A",
+            "_locator": "a.jsonl:1",
+            "_session": "shared-id",
+        },
+        {
+            "id": "prompt-b",
+            "role": "user",
+            "kind": "prompt",
+            "excerpt": "success criteria",
+            "_source": "Source B",
+            "_locator": "b.jsonl:1",
+            "_session": "shared-id",
+        },
+    ]
+    finding = _eyrima_synthetiko(
+        tekmiria=[
+            {"id": "prompt-a", "quote": "acceptance criteria"},
+            {"id": "prompt-b", "quote": "success criteria"},
+        ]
+    )
+
+    validated = topiko_modulo._epikyrwse_apotelesma(
+        {"findings": [finding]}, rows
+    )
+
+    assert validated[0]["episodes"] == 2
+
+
 def test_eyrimata_local_antikatastasi_idia_diastasi_kai_orio_epipedon() -> None:
     """Keeps local detail, replaces a duplicate rules candidate, and caps totals."""
     epikyromena = topiko_modulo._epikyrwse_apotelesma(

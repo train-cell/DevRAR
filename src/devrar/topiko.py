@@ -743,7 +743,7 @@ def _epikyrwse_apotelesma(
             )
         xrisimopoiimena_zevgaria.add(zevgari)
         tekmiria: list[dict[str, str]] = []
-        synedries: set[str] = set()
+        synedries: set[tuple[str, str]] = set()
         grammes_tekmirion: list[Mapping[str, str]] = []
         for tekmirio_akatharisto in tekmiria_akatharista:
             if not isinstance(tekmirio_akatharisto, Mapping) or set(
@@ -787,7 +787,9 @@ def _epikyrwse_apotelesma(
                     "apospasma": apospasma,
                 }
             )
-            synedries.add(pliris_eggrafi["_session"])
+            synedries.add(
+                (pliris_eggrafi["_source"], pliris_eggrafi["_session"])
+            )
         apodosi = _apodosi_apo_rolous(grammes_tekmirion)
         egkyra.append(
             {

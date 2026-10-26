@@ -154,10 +154,18 @@ MERKES_ANTI_PARALIPSIS = _merkes(
     r"(?:tests|δοκιμές|ελέγχους)\b",
     r"μην παραλείπ(?:εις|ετε|ουμε|ουν)\b[^.!?;]{0,60}\b(?:τα )?"
     r"(?:tests|δοκιμές|ελέγχους)\b",
+    r"\b(?:never|not|don't|do not|cannot|can't|won't|should not|shouldn't|"
+    r"must not|mustn't)\b[^.!?;\n]{0,80}\bwithout\s+(?:running\s+)?"
+    r"(?:the\s+)?(?:tests?|pytest|checks?)\b",
+    r"\b(?:δεν|ποτέ|μην)\b[^.!?;\n]{0,80}\bχωρίς\s+"
+    r"(?:να\s+\w+\s+)?(?:τα\s+)?(?:tests|δοκιμές|ελέγχους)\b",
 )
 MERKES_YPO_TROPOU_PARALIPSIS = _merkes(
     r"\b(?:should|could|would|might|may|maybe|consider|whether)\b"
     r"[^.!?;\n]{0,60}\bskip(?:ping)?\b[^.!?;\n]{0,40}\b(?:tests?|pytest|checks?)\b",
+    r"\b(?:should|could|would|might|may|maybe|consider|whether)\b"
+    r"[^.!?;\n]{0,60}\bwithout\s+(?:running\s+)?(?:the\s+)?"
+    r"(?:tests?|pytest|checks?)\b",
 )
 MERKES_PARAGRAFON = _merkes(
     r"\"[^\"\n]*\"",
@@ -247,6 +255,19 @@ def _einai_se_paragrafika(keimeno: str, thesi: int) -> bool:
     return False
 
 
+def _einai_se_erotisi(keimeno: str, telos: int) -> bool:
+    """Αποκλείει skip cues που ανήκουν σε ερωτηματική πρόταση."""
+    ypoloipo = keimeno[telos:]
+    simadi = re.match(r"^[^.!?;\n\u037e]*([?!;\u037e])", ypoloipo)
+    if simadi is None:
+        return False
+    if simadi.group(1) in {"?", "\u037e"}:
+        return True
+    return simadi.group(1) == ";" and any(
+        "\u0370" <= xaraktiras <= "\u03ff" for xaraktiras in keimeno[:telos]
+    )
+
+
 def _einai_rhto_skip_elegxou(keimeno: str) -> bool:
     """Αναγνωρίζει μόνο unquoted, affirmative skip instructions, όχι anti-skip."""
     if any(merki.search(keimeno) for merki in MERKES_ANTI_PARALIPSIS):
@@ -255,7 +276,9 @@ def _einai_rhto_skip_elegxou(keimeno: str) -> bool:
         return False
     for merki in MERKES_RITIS_PARALIPSIS:
         for parousia in merki.finditer(keimeno):
-            if not _einai_se_paragrafika(keimeno, parousia.start()):
+            if not _einai_se_paragrafika(
+                keimeno, parousia.start()
+            ) and not _einai_se_erotisi(keimeno, parousia.end()):
                 return True
     return False
 

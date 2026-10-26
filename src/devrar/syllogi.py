@@ -562,6 +562,7 @@ def syllexe_dedomena(
     erga: list[dict[str, object]] = []
     if apothitiria:
         sfalmata_git = 0
+        agnostes_imerominies_git = 0
         apothikies_idomenes: set[str] = set()
         periodos_git = SygkrotitisPeriodou()
         filtro_grafea = author.casefold().strip() or None if author else None
@@ -571,7 +572,12 @@ def syllexe_dedomena(
                 continue
             apothikies_idomenes.add(kleidi_apothikiou)
             try:
-                commit_ids, plithos_arxeion, periodos_apothikioy = _diavase_git_commits(
+                (
+                    commit_ids,
+                    plithos_arxeion,
+                    periodos_apothikioy,
+                    agnostes_imerominies,
+                ) = _diavase_git_commits(
                     apothikio, zonh_anaforas, apo, eos, filtro_grafea
                 )
             except (OSError, subprocess.SubprocessError, ValueError) as sfalma:
@@ -581,6 +587,7 @@ def syllexe_dedomena(
                 sfalmata_git += 1
                 erga.append({"onoma": apothikio.name, "commits": None, "arxeia": None})
                 continue
+            agnostes_imerominies_git += agnostes_imerominies
             periodos_git.prosthese(periodos_apothikioy.apo)
             periodos_git.prosthese(periodos_apothikioy.eos)
             erga.append(
@@ -603,10 +610,16 @@ def syllexe_dedomena(
                         int(metrikes_imeras["commits"] or 0) + 1
                     )
         metrikes["commits"] = None if sfalmata_git else len(commit_ids_synola)
-        katastasi_git = "ok" if sfalmata_git == 0 else "partial"
-        simeiosi_git = (
-            "" if not sfalmata_git else "Ορισμένα repositories δεν ήταν αναγνώσιμα."
-        )
+        synolika_sfalmata_git = sfalmata_git + agnostes_imerominies_git
+        katastasi_git = "ok" if synolika_sfalmata_git == 0 else "partial"
+        simeiosi_git = ""
+        if sfalmata_git:
+            simeiosi_git = "Ορισμένα repositories δεν ήταν αναγνώσιμα."
+        if agnostes_imerominies_git:
+            simeiosi_git = (f"{simeiosi_git} " if simeiosi_git else "") + (
+                f"{agnostes_imerominies_git} commits with unknown author dates "
+                "were excluded from filtered totals."
+            )
         if periodos_git.apo is None or periodos_git.eos is None:
             simeiosi_git = (
                 f"{simeiosi_git} " if simeiosi_git else ""
@@ -615,7 +628,7 @@ def syllexe_dedomena(
             _pigi_row(
                 "Git",
                 len(apothikies_idomenes),
-                sfalmata_git,
+                synolika_sfalmata_git,
                 simeiosi_git,
                 katastasi_git,
                 adapter=GIT_ADAPTER,
@@ -625,6 +638,12 @@ def syllexe_dedomena(
         )
         if sfalmata_git:
             simeioseis.append(f"Git: {sfalmata_git} repositories δεν ήταν αναγνώσιμα.")
+        if agnostes_imerominies_git:
+            simeioseis.append(
+                f"Git: {agnostes_imerominies_git} commits with unknown timestamps "
+                "were excluded from filtered totals, so selected-period counts "
+                "are partial."
+            )
     else:
         metrikes["commits"] = None
 
@@ -688,7 +707,7 @@ def syllexe_dedomena(
                 "prompts": metrikes_imeras["prompts"],
                 "commits": metrikes_imeras["commits"],
             }
-            for imera, metrikes_imeras in sorted(drastiriotita.items())
+            for imera_key, metrikes_imeras in sorted(drastiriotita.items())
         ],
         "projects": erga,
         "scope_git": {"rev": "HEAD", "author": filtro_grafea} if apothitiria else None,
@@ -875,10 +894,9 @@ def _diavase_arxeio(
                 or energi_synedria
             )
         if eggrafi.get("type") == "turn_context" and isinstance(fortio, dict):
-            energo_modelo = _proto_keimeno(fortio.get("model")) or energo_modelo
-            energo_turn_id = (
-                _proto_keimeno(fortio.get("turn_id"), fortio.get("root_turn_id"))
-                or energo_turn_id
+            energo_modelo = _proto_keimeno(fortio.get("model"))
+            energo_turn_id = _proto_keimeno(
+                fortio.get("turn_id"), fortio.get("root_turn_id")
             )
         if eggrafi.get("type") == "session_meta" and isinstance(fortio, dict):
             energo_goneas = (
@@ -1657,7 +1675,7 @@ def _diavase_git_commits(
     apo: date | None,
     eos: date | None,
     grafeas: str | None,
-) -> tuple[dict[str, dict[str, date | None]], int, SygkrotitisPeriodou]:
+) -> tuple[dict[str, dict[str, date | None]], int, SygkrotitisPeriodou, int]:
     """Διαβάζει commits και το tracked inventory του HEAD χωρίς αλλαγές."""
     entoli = [
         "git",
@@ -1680,17 +1698,29 @@ def _diavase_git_commits(
     trexousa_imerominia: date | None = None
     trexon_dimioyrgos: str = ""
     periodos = SygkrotitisPeriodou()
+    agnostes_imerominies = 0
     grammes = apotelesma_git.stdout.splitlines()
     for grammi in grammes + ["\x00"]:
         if "\x1f" in grammi or grammi == "\x00":
             if trexon_id:
                 egkyr_dimioyrgos = grafeas is None or grafeas in trexon_dimioyrgos
-                entos_periodou = trexousa_imerominia is None or (
-                    (apo is None or trexousa_imerominia >= apo)
-                    and (eos is None or trexousa_imerominia <= eos)
-                )
-                if egkyr_dimioyrgos and entos_periodou:
-                    commit_ids[trexon_id] = {"imerominia": trexousa_imerominia}
+                xreiazetai_imerominia = apo is not None or eos is not None
+                if (
+                    egkyr_dimioyrgos
+                    and trexousa_imerominia is None
+                    and xreiazetai_imerominia
+                ):
+                    agnostes_imerominies += 1
+                    trexon_id = None
+                    if grammi == "\x00":
+                        break
+                else:
+                    entos_periodou = trexousa_imerominia is None or (
+                        (apo is None or trexousa_imerominia >= apo)
+                        and (eos is None or trexousa_imerominia <= eos)
+                    )
+                    if egkyr_dimioyrgos and entos_periodou:
+                        commit_ids[trexon_id] = {"imerominia": trexousa_imerominia}
                 trexon_id = None
             if grammi == "\x00":
                 break
@@ -1714,7 +1744,7 @@ def _diavase_git_commits(
     tracked_head = [
         diadromi for diadromi in apotelesma_tree.stdout.split("\0") if diadromi
     ]
-    return commit_ids, len(tracked_head), periodos
+    return commit_ids, len(tracked_head), periodos, agnostes_imerominies
 
 
 def _proto_keimeno(*times: object) -> str | None:
