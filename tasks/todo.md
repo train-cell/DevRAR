@@ -16,7 +16,7 @@
 - [x] Independent source/assessment/UI review of first integrated slice; findings corrected.
 - [ ] Repeat integrated review for wave-two native/provider additions.
 - [x] Full pytest/coverage, Ruff/mypy, build, fresh install and browser smoke.
-- [ ] Updated docs, handoff and feature-branch PR push; no merge.
+- [x] Updated docs, handoff and feature-branch draft PR #2 push; no merge.
 - [ ] Additional interface languages and broader date/project interaction scopes.
 
 External gates: representative human labels/agreement for numerical grading;

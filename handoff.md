@@ -15,7 +15,10 @@ This is a verified development checkpoint, not full-vision completion or release
 Workspace: `C:/Users/skyd3/antigarvity/DevRAR`.
 Branch: `codex/full-vision-recap`, based on `origin/main` `df6a39b` (same tree as
 baseline `c14927a`). Version: **0.2.0 preview**. PR #1 was merged by the owner;
-the expansion belongs in a NEW draft PR, never PR #1. No agent merge is allowed.
+The expansion is saved in draft PR #2: https://github.com/train-cell/DevRAR/pull/2.
+Implementation checkpoint: `7a6fc666bb56fb4d252c6c538c426bfcaaab296d`, pushed to
+`origin/codex/full-vision-recap`; the closure documentation commit follows it.
+No agent merge is allowed.
 Closure commits/push are restricted to this repository. Use Git to read the
 checkpoint SHA; private reports/build environments remain ignored. No stashes.
 
