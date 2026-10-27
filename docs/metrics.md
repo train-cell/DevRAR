@@ -42,6 +42,16 @@ Date bounds are inclusive calendar dates in `--timezone` (default
 and that source is marked partial. Without a filter, supported undated records
 can contribute to counters but cannot establish an active day.
 
+## Metrics not emitted in v0.1
+
+The design inventory also discusses peak hours, heatmaps, activity-interval
+estimates, extracted test pass/failure summaries and changed-line deltas. These
+are not implemented metrics in this version. Its activity chart aggregates by
+calendar date; project file counts describe tracked files at HEAD, not changed
+lines. The inventory in the product brief is not a claim that every proposed
+metric is already available. Actual PC-time imports and additional application
+adapters remain later-version work.
+
 ## Evidence and assessment
 
 Full-stream activity counting and semantic evidence selection are separate.

@@ -1,5 +1,5 @@
 ---
-last_modified: 2026-10-26
+last_modified: 2026-10-27
 tags: [feature, handoff]
 ---
 
@@ -12,6 +12,12 @@ Pull request: https://github.com/train-cell/DevRAR/pull/1 (open, attached to the
 Initial implementation commit: `1f61f1b44f29e0f4d3369b7fa06e721012b32920`.
 The subsequent [delivery audit](docs/audit.md) corrects defects missed by the
 initial acceptance checks. Current source and checks are on PR #1.
+
+Fresh verification on 27 October 2026 is recorded in
+[docs/final-check.md](docs/final-check.md): full gates rerun, new installed CLI
+and browser journeys, native-input partial coverage and successful actual
+local-model inference. No product code changed in that validation. The complete
+original vision is not claimed 100% delivered; v0.1 limits remain explicit.
 
 ## Verified implementation
 
