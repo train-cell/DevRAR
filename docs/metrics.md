@@ -11,12 +11,16 @@ execute imported instructions or contact a model provider in rules mode.
 | Codex | JSONL session metadata, turn context, user/agent events and response items | Selected `--codex-path`, otherwise `~/.codex/sessions` |
 | Compressed JSONL | The same shapes in `.jsonl.zst` | Requires the `compressed` extra |
 | Git | Commit IDs, author identity/date and tracked file inventory | Selected repository HEAD; optional author substring filter |
+| OpenCode | Supported native SQLite session/message/part layouts | Selected database or documented default path |
+| Gemini CLI | Supported native session JSONL and explicit JSON message exports | Session discovery is restricted to `chats/session-*.jsonl` |
+| Antigravity | Observed native transcript JSONL and separate explicit exports | Native coverage remains partial; `.pb` unsupported |
 
 An explicit source path can be a file or directory. There is no drive-wide scan.
 JSONL shape support is tested with synthetic fixtures; vendor formats can change.
-Cloud chat exports, SQLite histories and OpenCode/Gemini/Antigravity formats are
-outside this version's compatibility claim. Source coverage describes selected
-inputs, not everything you have ever done.
+General cloud chat exports and unknown vendor/database schemas remain outside
+the compatibility claim. Source coverage describes selected inputs, not
+everything you have ever done. Exact discovery, schema boundaries and primary
+references are in [expanded recap](expanded-recap.md).
 
 ## Definitions
 
@@ -42,15 +46,15 @@ Date bounds are inclusive calendar dates in `--timezone` (default
 and that source is marked partial. Without a filter, supported undated records
 can contribute to counters but cannot establish an active day.
 
-## Metrics not emitted in v0.1
+## Expanded work metrics in 0.2
 
-The design inventory also discusses peak hours, heatmaps, activity-interval
-estimates, extracted test pass/failure summaries and changed-line deltas. These
-are not implemented metrics in this version. Its activity chart aggregates by
-calendar date; project file counts describe tracked files at HEAD, not changed
-lines. The inventory in the product brief is not a claim that every proposed
-metric is already available. Actual PC-time imports and additional application
-adapters remain later-version work.
+The expanded view adds hourly prompt counts, a dated calendar heatmap,
+observed-event interval estimates, parsed tool-result test summaries, bounded
+source/session check outcomes and separate first-parent Git change metadata.
+Supplied ActivityWatch/CSV intervals and cost ledgers are optional explicit
+inputs. Compatible report comparisons expose coverage and nullable deltas.
+See [definitions, examples and limits](expanded-recap.md). The original tracked
+HEAD inventory is still distinct from changed-file occurrences or changed lines.
 
 ## Evidence and assessment
 

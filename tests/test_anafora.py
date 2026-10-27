@@ -46,7 +46,7 @@ def test_run_diatirei_ti_methodo_kai_to_scope(tmp_path: Path) -> None:
     assert ektelesi["periodos"] == dedomena["periodos"]
     assert ektelesi["scope_git"] == dedomena["scope_git"]
     assert ektelesi["analysi"] == dedomena["analysi"]
-    assert ektelesi["ekdosi_devrar"] == "0.1.0"
+    assert ektelesi["ekdosi_devrar"] == "0.2.0"
 
 
 def test_markdown_dinei_elegksima_tekmiria_kai_kalypsi(tmp_path: Path) -> None:

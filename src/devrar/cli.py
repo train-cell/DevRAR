@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import io
+import json
 import logging
 import sys
 from collections.abc import Mapping, Sequence
@@ -16,11 +17,20 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 KATAGRAFI = logging.getLogger(__name__)
 PROEPILEGMENOS_FAKELOS = Path("devrar-reports")
 PROEPILEGMENI_ZONI = "Europe/Athens"
-YPOSYRIZES_PIGES = ("claude", "codex")
-TROPOI_ANALYSI = ("rules", "local")
+YPOSYRIZES_PIGES = ("claude", "codex", "opencode", "gemini", "antigravity")
+TROPOI_ANALYSI = ("rules", "local", "cloud")
+PROEPILEGMENO_CLOUD_KEY_ENV = "DEVRAR_CLOUD_API_KEY"
+ORIO_COMPARE_BYTES = 10 * 1024 * 1024
+ELAXISTA_IDLE_MINUTES = 1
+MEGISTA_IDLE_MINUTES = 1440
+PROEPILEGMENES_IDLE_MINUTES = 15
 EPITYXIA = 0
 APOTYXIA = 1
 MERIKH_KALYPSI = 3
+CLOUD_FAILURE_REASON = (
+    "The cloud request failed or its response did not pass validation; "
+    "collected metrics and rules observations are retained."
+)
 
 
 def _ftiaxe_analytis() -> argparse.ArgumentParser:
@@ -56,6 +66,9 @@ def _ftiaxe_analytis() -> argparse.ArgumentParser:
     tyligma.add_argument(
         "--codex-path", dest="diadromi_codex", type=Path, help="Codex data root"
     )
+    tyligma.add_argument("--opencode-path", dest="diadromi_opencode", type=Path)
+    tyligma.add_argument("--gemini-path", dest="diadromi_gemini", type=Path)
+    tyligma.add_argument("--antigravity-path", dest="diadromi_antigravity", type=Path)
     tyligma.add_argument(
         "--since", dest="apo", help="inclusive start date (YYYY-MM-DD)"
     )
@@ -85,7 +98,10 @@ def _ftiaxe_analytis() -> argparse.ArgumentParser:
         dest="analysi",
         choices=TROPOI_ANALYSI,
         default="rules",
-        help="analysis mode",
+        help=(
+            "rules, local model, or cloud; cloud sends bounded redacted excerpts "
+            "to the chosen provider"
+        ),
     )
     tyligma.add_argument(
         "--local-model",
@@ -98,6 +114,39 @@ def _ftiaxe_analytis() -> argparse.ArgumentParser:
         type=Path,
         help="optional path to the local Ollama executable",
     )
+    tyligma.add_argument(
+        "--cloud-endpoint",
+        dest="cloud_endpoint",
+        help="explicit HTTPS chat-completions URL; bounded redacted excerpts are sent",
+    )
+    tyligma.add_argument("--cloud-model", dest="cloud_model")
+    tyligma.add_argument(
+        "--cloud-key-env",
+        dest="cloud_key_env",
+        default=None,
+        help=(
+            "environment variable containing the API key "
+            f"(default: {PROEPILEGMENO_CLOUD_KEY_ENV})"
+        ),
+    )
+    tyligma.add_argument(
+        "--allow-cloud-evidence",
+        dest="allow_cloud_evidence",
+        action="store_true",
+        help="consent to send bounded redacted excerpts to the chosen provider",
+    )
+    tyligma.add_argument(
+        "--idle-minutes",
+        dest="lepta_adraneias",
+        type=int,
+        default=PROEPILEGMENES_IDLE_MINUTES,
+        help="session split gap in minutes (1-1440)",
+    )
+    tyligma.add_argument("--compare", dest="diadromi_sygkrisis", type=Path)
+    tyligma.add_argument(
+        "--activitywatch-path", dest="diadromi_drastiriotitas", type=Path
+    )
+    tyligma.add_argument("--cost-path", dest="diadromi_kostous", type=Path)
     return analytis
 
 
@@ -123,11 +172,22 @@ def _anafora_einai_meriki(dedomena: Mapping[str, object]) -> bool:
     analysi = dedomena.get("analysi")
     if isinstance(analysi, Mapping) and analysi.get("katastasi") == "failed":
         return True
+    for kleidi in ("energos_xronos", "kostos"):
+        eisagogi = dedomena.get(kleidi)
+        if isinstance(eisagogi, Mapping) and eisagogi.get("status") != "ok":
+            return True
     piges = dedomena.get("piges")
     if not isinstance(piges, list):
         return True
     for pigi in piges:
         if isinstance(pigi, Mapping) and pigi.get("katastasi") != "ok":
+            return True
+    if "git_diafores" in dedomena:
+        git_diafores = dedomena.get("git_diafores")
+        if (
+            not isinstance(git_diafores, Mapping)
+            or git_diafores.get("katastasi") != "ok"
+        ):
             return True
     return False
 
@@ -153,6 +213,9 @@ def _epikyrone_epiloges(
     for onoma_pigis, diadromi in (
         ("claude", orismata.diadromi_claude),
         ("codex", orismata.diadromi_codex),
+        ("opencode", orismata.diadromi_opencode),
+        ("gemini", orismata.diadromi_gemini),
+        ("antigravity", orismata.diadromi_antigravity),
     ):
         if diadromi is not None:
             fakeloi[onoma_pigis] = diadromi
@@ -166,6 +229,9 @@ def _epikyrone_epiloges(
         or eos is not None
         or orismata.syggrafeas is not None
         or orismata.zoni is not None
+        or orismata.diadromi_drastiriotitas is not None
+        or orismata.diadromi_kostous is not None
+        or orismata.lepta_adraneias != PROEPILEGMENES_IDLE_MINUTES
     ):
         analytis.error(
             "--demo cannot be combined with live sources, repositories, or filters"
@@ -178,7 +244,51 @@ def _epikyrone_epiloges(
         orismata.topiko_modelo is not None or orismata.diadromi_ollama is not None
     ):
         analytis.error("--local-model and --ollama-path are only with --analysis local")
+    cloud_orismata_rita = (
+        orismata.cloud_endpoint is not None
+        or orismata.cloud_model is not None
+        or orismata.cloud_key_env is not None
+        or orismata.allow_cloud_evidence
+    )
+    if orismata.analysi == "cloud":
+        if not isinstance(orismata.cloud_endpoint, str) or not orismata.cloud_endpoint:
+            analytis.error("--analysis cloud requires --cloud-endpoint")
+        if (
+            not isinstance(orismata.cloud_model, str)
+            or not orismata.cloud_model.strip()
+        ):
+            analytis.error("--analysis cloud requires --cloud-model")
+        if not orismata.allow_cloud_evidence:
+            analytis.error("--analysis cloud requires --allow-cloud-evidence consent")
+        if orismata.topiko_modelo is not None or orismata.diadromi_ollama is not None:
+            analytis.error("--local-model and --ollama-path cannot be used with cloud")
+    elif cloud_orismata_rita:
+        analytis.error("Cloud options are only with --analysis cloud")
+    if not ELAXISTA_IDLE_MINUTES <= orismata.lepta_adraneias <= MEGISTA_IDLE_MINUTES:
+        analytis.error("--idle-minutes must be between 1 and 1440")
     return piges, fakeloi, apo, eos
+
+
+def _diavase_sygkrisi(
+    diadromi: Path, analytis: argparse.ArgumentParser
+) -> Mapping[str, object]:
+    """Διαβάζει περιορισμένο JSON baseline ως αυστηρό report object."""
+    try:
+        with diadromi.open("rb") as arxeio:
+            periexomeno = arxeio.read(ORIO_COMPARE_BYTES + 1)
+    except OSError as sfalma:
+        analytis.error(f"cannot read comparison report: {sfalma}")
+    if len(periexomeno) > ORIO_COMPARE_BYTES:
+        analytis.error("comparison report exceeds the 10 MB limit")
+    try:
+        dedomena = json.loads(periexomeno)
+    except (json.JSONDecodeError, UnicodeDecodeError, RecursionError):
+        analytis.error("comparison report must be valid UTF-8 JSON")
+    if not isinstance(dedomena, dict) or not all(
+        isinstance(kleidi, str) for kleidi in dedomena
+    ):
+        analytis.error("comparison report must be a JSON object")
+    return cast(Mapping[str, object], dedomena)
 
 
 def kyria(orismata: Sequence[str] | None = None) -> int:
@@ -201,10 +311,35 @@ def kyria(orismata: Sequence[str] | None = None) -> int:
         piges, fakeloi, apo, eos = _epikyrone_epiloges(epiloges, analytis)
     except SystemExit as sfalma:
         return int(sfalma.code or EPITYXIA)
-    if not epiloges.synthetika and not piges and not epiloges.apothitiria:
+    if (
+        not epiloges.synthetika
+        and not piges
+        and not epiloges.apothitiria
+        and epiloges.diadromi_drastiriotitas is None
+        and epiloges.diadromi_kostous is None
+    ):
         analytis.print_help()
         return EPITYXIA
+    sygkrisi_baseline: Mapping[str, object] | None = None
+    if epiloges.diadromi_sygkrisis is not None:
+        try:
+            sygkrisi_baseline = _diavase_sygkrisi(epiloges.diadromi_sygkrisis, analytis)
+        except SystemExit as sfalma:
+            return int(sfalma.code or EPITYXIA)
+        baseline_leitourgia = sygkrisi_baseline.get("leitourgia")
+        if baseline_leitourgia not in {"demo", "live"}:
+            try:
+                analytis.error("comparison baseline must declare demo or live mode")
+            except SystemExit as sfalma:
+                return int(sfalma.code or EPITYXIA)
+        baseline_demo = baseline_leitourgia == "demo"
+        if baseline_demo != bool(epiloges.synthetika):
+            try:
+                analytis.error("comparison baseline must use the same demo/live mode")
+            except SystemExit as sfalma:
+                return int(sfalma.code or EPITYXIA)
     local_sfalma: str | None = None
+    cloud_sfalma = False
     try:
         if epiloges.synthetika:
             print("Loading the synthetic demo...")
@@ -213,22 +348,40 @@ def kyria(orismata: Sequence[str] | None = None) -> int:
             dedomena = fortose_deigma()
         else:
             print("Reading the selected local history...")
-            from devrar.syllogi import syllexe_dedomena
+            from devrar.syndesi import syllexe_pliri
 
-            dedomena = syllexe_dedomena(
+            dedomena = syllexe_pliri(
                 piges,
                 fakeloi,
                 epiloges.apothitiria,
-                apo=apo,
-                eos=eos,
-                zoni=epiloges.zoni or PROEPILEGMENI_ZONI,
+                apo,
+                eos,
+                epiloges.zoni or PROEPILEGMENI_ZONI,
                 author=epiloges.syggrafeas,
+                idle_minutes=epiloges.lepta_adraneias,
             )
 
         from devrar.axiologisi import axiologise_ergasia
+        from devrar.epeisodia import axiologise_epeisodia
 
         print("Reviewing workflow evidence...")
         dedomena = axiologise_ergasia(dedomena)
+        dedomena = axiologise_epeisodia(dedomena)
+        if (
+            epiloges.diadromi_drastiriotitas is not None
+            or epiloges.diadromi_kostous is not None
+        ):
+            from devrar.eisagoges import diavase_energo_xrono, diavase_kostos
+
+            zoni_eisagogis = epiloges.zoni or PROEPILEGMENI_ZONI
+            if epiloges.diadromi_drastiriotitas is not None:
+                dedomena["energos_xronos"] = diavase_energo_xrono(
+                    epiloges.diadromi_drastiriotitas, apo, eos, zoni_eisagogis
+                )
+            if epiloges.diadromi_kostous is not None:
+                dedomena["kostos"] = diavase_kostos(
+                    epiloges.diadromi_kostous, apo, eos, zoni_eisagogis
+                )
         if epiloges.analysi == "local":
             assert epiloges.topiko_modelo is not None
             print(f"Starting local analysis with {epiloges.topiko_modelo}...")
@@ -262,6 +415,60 @@ def kyria(orismata: Sequence[str] | None = None) -> int:
                     "modelo": epiloges.topiko_modelo,
                     "efarmostike": "rules",
                 }
+        elif epiloges.analysi == "cloud":
+            print("Starting explicitly approved cloud analysis...")
+            try:
+                cloud = import_module("devrar.cloud")
+                analysi_cloud = cast(
+                    Callable[
+                        [Mapping[str, object], str, str, bool, str], dict[str, object]
+                    ],
+                    getattr(cloud, "analysi_cloud"),
+                )
+                assert isinstance(epiloges.cloud_model, str)
+                assert isinstance(epiloges.cloud_endpoint, str)
+                dedomena = analysi_cloud(
+                    dedomena,
+                    epiloges.cloud_model,
+                    epiloges.cloud_endpoint,
+                    True,
+                    epiloges.cloud_key_env or PROEPILEGMENO_CLOUD_KEY_ENV,
+                )
+            except (
+                AttributeError,
+                ImportError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+                KeyError,
+            ):
+                KATAGRAFI.warning("DevRAR cloud analysis failed")
+                cloud_sfalma = True
+                proigoumeni_analysi = dedomena.get("analysi")
+                analysi_fail = (
+                    dict(proigoumeni_analysi)
+                    if isinstance(proigoumeni_analysi, Mapping)
+                    else {}
+                )
+                analysi_fail.update(
+                    {
+                        "methodos": "cloud",
+                        "katastasi": "failed",
+                        "aitia": CLOUD_FAILURE_REASON,
+                        "provider": "openai_compatible",
+                        "model_id": epiloges.cloud_model,
+                        "cloud_opt_in": True,
+                        "efarmostike": "rules",
+                        "vathmoi_vathmologimenoi": False,
+                        "symfonia_anthropinon_aksiologiton": False,
+                    }
+                )
+                dedomena["analysi"] = analysi_fail
+        if sygkrisi_baseline is not None:
+            from devrar.proodos import sygkrine_anafores
+
+            dedomena["sygkrisi"] = sygkrine_anafores(dedomena, sygkrisi_baseline)
 
         from devrar.anafora import apothikefse_anafora
 
@@ -292,6 +499,13 @@ def kyria(orismata: Sequence[str] | None = None) -> int:
             f"Local analysis failed: {local_sfalma.rstrip('.')}. "
             "The report keeps the original metrics and rules observations. "
             "Check the Ollama/model error above, or use --analysis rules.",
+            file=sys.stderr,
+        )
+        return MERIKH_KALYPSI
+    if cloud_sfalma:
+        print(
+            "Cloud analysis failed; the report keeps collected metrics and rules "
+            "observations. Check the endpoint, model, and API key configuration.",
             file=sys.stderr,
         )
         return MERIKH_KALYPSI

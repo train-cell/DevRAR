@@ -17,6 +17,8 @@ from pathlib import Path
 from typing import TypeAlias
 
 from devrar import __version__
+from devrar.anagnorisi import ftiaxe_anagnorisi
+from devrar.report_extras import prostheto_markdown
 
 KATAGRAFI = logging.getLogger(__name__)
 MEGISTES_PROSPATHIES = 5
@@ -349,6 +351,7 @@ def _ftiaxe_markdown(dedomena: Mapping[str, object]) -> str:
                     f"{_asfales_markdown(pigi.get('katastasi', 'unknown'))} — "
                     f"{_asfales_markdown(pigi.get('simeiosi', ''))}"
                 )
+    grammes.extend(prostheto_markdown(dedomena, _asfales_markdown))
     return "\n".join(grammes)
 
 
@@ -361,21 +364,32 @@ def _ftiaxe_tekmiria(dedomena: Mapping[str, object]) -> str:
     """Γράφει κάθε evidence item ως ξεχωριστή JSONL εγγραφή."""
     grammes: list[str] = []
     eyrimata_raw = dedomena.get("eyrimata")
-    if not isinstance(eyrimata_raw, list):
-        return ""
-    for eyrima in eyrimata_raw:
-        if not isinstance(eyrima, Mapping):
+    epeisodia_raw = dedomena.get("epeisodia_ergasias")
+    epeisodia = epeisodia_raw if isinstance(epeisodia_raw, Mapping) else {}
+    for katigoria, omada in (
+        ("workflow_cue", eyrimata_raw),
+        ("observed_check", epeisodia.get("paratiriseis")),
+    ):
+        if not isinstance(omada, list):
             continue
-        tekmiria = eyrima.get("tekmiria")
-        if not isinstance(tekmiria, list):
-            continue
-        for tekmirio in tekmiria:
-            if isinstance(tekmirio, Mapping):
-                grammes.append(
-                    json.dumps(
-                        {"eyrima_id": eyrima.get("id"), **tekmirio}, ensure_ascii=False
+        for eyrima in omada:
+            if not isinstance(eyrima, Mapping):
+                continue
+            tekmiria = eyrima.get("tekmiria")
+            if not isinstance(tekmiria, list):
+                continue
+            for tekmirio in tekmiria:
+                if isinstance(tekmirio, Mapping):
+                    grammes.append(
+                        json.dumps(
+                            {
+                                **tekmirio,
+                                "eyrima_id": eyrima.get("id"),
+                                "katigoria": katigoria,
+                            },
+                            ensure_ascii=False,
+                        )
                     )
-                )
     return "\n".join(grammes) + ("\n" if grammes else "")
 
 
@@ -409,6 +423,7 @@ def apothikefse_anafora(
             "Report data must contain only JSON-compatible values"
         ) from sfalma
     dedomena_antigrafo = _pare_anaptyxi(dedomena_antigrafo)
+    dedomena_antigrafo["anagnorisi"] = ftiaxe_anagnorisi(dedomena_antigrafo)
     dedomena_antigrafo.pop("afigisi_roast", None)
     if roast:
         synola_raw = dedomena_antigrafo.get("synola")

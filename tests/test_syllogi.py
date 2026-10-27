@@ -1833,6 +1833,13 @@ def test_syllogi_agnosti_schema_menei_partial_kai_metrics_unknown(
     assert any("unrecognized" in simeiosi for simeiosi in apotelesma["simeioseis"])
 
 
+def test_syllogi_apokryptei_codex_native_payload_otan_den_einai_epilegmeno() -> None:
+    """Native Codex subreport is omitted unless Codex source was selected."""
+    apotelesma = syllexe_dedomena([], {}, [])
+
+    assert "codex_native" not in apotelesma
+
+
 def test_syllogi_agnosti_schema_den_midenizei_anagnorismeno_activity(
     tmp_path: Path,
 ) -> None:

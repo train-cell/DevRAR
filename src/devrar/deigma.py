@@ -32,7 +32,15 @@ def fortose_deigma() -> AnaforaDedom:
     dedomena: AnaforaDedom = {
         "ekdosi_sximatos": "1",
         "leitourgia": "demo",
-        "scope_git": {"rev": "HEAD", "author": None},
+        "scope_git": {
+            "rev": "HEAD",
+            "author": None,
+            "repositories": [
+                "demo-orbit-notes",
+                "demo-little-compiler",
+                "demo-garden-api",
+            ],
+        },
         "periodos": {
             "apo": IMEROMINIES[0],
             "eos": IMEROMINIES[-1],
@@ -294,4 +302,8 @@ def fortose_deigma() -> AnaforaDedom:
             )
         ],
     }
-    return axiologise_ergasia(deepcopy(dedomena))
+    from devrar.deigma_ergasias import prosthese_deigma_ergasias
+
+    return prosthese_deigma_ergasias(
+        axiologise_ergasia(deepcopy(dedomena)), IMEROMINIES, PROMPTS_ANA_IMERA
+    )

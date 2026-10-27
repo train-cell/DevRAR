@@ -13,7 +13,7 @@
       __DEVRAR_CSS__
     </style>
   </head>
-  <body>
+  <body data-theme="original">
     <div class="app-shell">
       <aside class="sidebar" aria-label="Main navigation">
         <a class="brand" href="#story" aria-label="DevRAR home"
@@ -69,6 +69,13 @@
             <span class="privacy-pill"
               ><span></span> Stored on this device</span
             >
+            <label class="appearance-control" for="appearance-select">
+              <span>Appearance</span>
+              <select id="appearance-select" aria-label="Appearance">
+                <option value="original" selected>Original</option>
+                <option value="blue-hour">Blue hour</option>
+              </select>
+            </label>
             <div class="view-switch" role="tablist" aria-label="Report view">
               <button
                 id="story-tab"
