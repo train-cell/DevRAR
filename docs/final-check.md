@@ -15,6 +15,21 @@ Three independent Luna workers reviewed documentation traceability,
 data/assessment boundaries and actual rendered journeys. They found no confirmed
 blocker for the declared v0.1. The original briefs retain their design proposals.
 
+## CI finding during closure
+
+The first push of this record exposed a browser-test synchronization defect in
+both CI runs: the pause clock advanced by one compositor frame between an
+immediate snapshot and the settled pause. The other nine browser tests and all
+four Python matrix jobs passed. The test now awaits the animation's `ready`
+promise and asserts `playState == paused` before taking its baseline, preserving
+exact clock equality afterward. This follows the documented
+[pending play/pause semantics](https://developer.mozilla.org/en-US/docs/Web/API/Animation/ready).
+
+An isolated mutation removed pause CSS only from a temporary generated HTML;
+the corrected assertion rejected its running animation. No runtime product
+change or timing-tolerance relaxation was used. The focused test passed, and
+the complete browser suite and current-head CI are checked again after this fix.
+
 ## Fresh verification
 
 | Check | Observed result |

@@ -392,8 +392,24 @@ def test_browser_kinisi_epanekkinisi_pafsi_kai_metrisi(tmp_path: Path) -> None:
         page.locator("#play-story").click()
         page.wait_for_timeout(180)
         page.locator("#play-story").click()
+        katastasi_pafsis_prin = orbit.evaluate(
+            """async el => {
+              const kinisi = el.getAnimations()[0];
+              await kinisi.ready;
+              return { playState: kinisi.playState, pending: kinisi.pending };
+            }"""
+        )
+        assert katastasi_pafsis_prin == {"playState": "paused", "pending": False}
         clock_before = orbit.evaluate("el => el.getAnimations()[0].currentTime")
         page.wait_for_timeout(180)
+        katastasi_pafsis_meta = orbit.evaluate(
+            """async el => {
+              const kinisi = el.getAnimations()[0];
+              await kinisi.ready;
+              return { playState: kinisi.playState, pending: kinisi.pending };
+            }"""
+        )
+        assert katastasi_pafsis_meta == {"playState": "paused", "pending": False}
         clock_after = orbit.evaluate("el => el.getAnimations()[0].currentTime")
         assert clock_after == clock_before
         star = page.locator(".starburst")

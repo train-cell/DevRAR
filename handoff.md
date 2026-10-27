@@ -19,6 +19,11 @@ and browser journeys, native-input partial coverage and successful actual
 local-model inference. No product code changed in that validation. The complete
 original vision is not claimed 100% delivered; v0.1 limits remain explicit.
 
+The closure CI exposed a pending-pause clock race in the browser assertion.
+The test awaits animation readiness and still requires paused/not-pending state
+and exact clock equality. A temporary running-animation mutation is rejected;
+runtime product code remains unchanged. See the CI finding in final-check.md.
+
 ## Verified implementation
 
 - [x] Claude/Codex JSONL and optional ZST readers; selected Git HEADs and author scope.
