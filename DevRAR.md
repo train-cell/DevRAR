@@ -2,11 +2,11 @@
 
 *Your AI coding, rated and wrapped.*
 
-**Έκδοση brief:** 0.4 · **Ημερομηνία:** 26 Οκτωβρίου 2026
-**Κατάσταση:** υλοποιημένη και επαληθευμένη v0.1, δημοσιευμένη σε feature branch με [PR #1](https://github.com/train-cell/DevRAR/pull/1), χωρίς merge.
-**Παραδοτέο:** τοπικό CLI, offline HTML/Markdown/JSON και SVG, Claude/Codex/Git readers, Story/Explore, rules και προαιρετικό local coaching. Η επαλήθευση καταγράφεται στο [handoff.md](handoff.md).
+**Έκδοση brief:** 0.5 · **Ημερομηνία:** 27 Οκτωβρίου 2026
+**Κατάσταση:** επέκταση v0.2 preview στο `codex/full-vision-recap`. Το PR #1 της v0.1 έχει συγχωνευθεί από τον owner· η επέκταση παραδίδεται σε νέο checkpoint, χωρίς νέο merge. Η επαλήθευση και οι εκκρεμότητες καταγράφονται στο [handoff.md](handoff.md).
+**Παραδοτέο:** τοπικό CLI, offline HTML/Markdown/JSON, SVG/PNG share, επιπλέον πηγές, work metrics, check outcomes, συγκρίσεις και supplied time/cost imports. Τα ακριβή όρια είναι στο [expanded recap](docs/expanded-recap.md).
 
-**Όρια v0.1:** η αριθμητική βαθμολογία παραμένει μη διαθέσιμη μέχρι calibration και συμφωνία ανθρώπινων αξιολογητών. Το local coaching λειτουργεί με ήδη εγκατεστημένο μοντέλο, bounded evidence και αυστηρή επικύρωση citations. Οι επόμενοι adapters και η μέτρηση πραγματικού PC time παραμένουν roadmap.
+**Όρια:** η αριθμητική βαθμολογία παραμένει μη διαθέσιμη μέχρι calibration και συμφωνία ανθρώπινων αξιολογητών. Το local coaching λειτουργεί με ήδη εγκατεστημένο μοντέλο, bounded evidence και αυστηρή επικύρωση citations. Η συμβατότητα κάθε adapter είναι ρητή· τα supplied watcher intervals δεν αναπληρώνουν το άγνωστο ιστορικό PC time.
 
 **Οπτική κατεύθυνση:** [DESIGN-BRIEF.md](DESIGN-BRIEF.md). Διαβάζεται πριν από κάθε υλοποίηση ή αλλαγή του HTML report και αποτελεί την αναφορά για layout, χρώματα, motion και αλληλεπίδραση.
 
@@ -88,12 +88,15 @@
 
 ### 4.2 Επόμενες εκδόσεις
 
-- Adapters για OpenCode, Gemini και Antigravity, ένας κάθε φορά.
-- Σύγκριση αναφορών ανά μήνα, έτος και project.
-- PNG exports και επιπλέον share-card layouts.
-- Προαιρετικό import δεδομένων ενεργού χρόνου, π.χ. ActivityWatch.
+Στο v0.2 preview υλοποιήθηκαν συγκεκριμένοι OpenCode/Gemini/Antigravity readers,
+σύγκριση συμβατών περιόδων, PNG share και ActivityWatch/CSV/cost imports.
+Η αρχική προδιαγραφή παραμένει η αναφορά για το συνολικό όραμα. Απομένουν:
+
+- Ευρύτερη native συμβατότητα και correlation πραγματικών task/code outcomes.
+- Project/date drill-down μέσα σε ήδη παραγόμενο report και επιπλέον share layouts.
 - Επιπλέον γλώσσες και themes.
 - Προαιρετικός cloud αναλυτής με ξεχωριστή, ρητή επιλογή του χρήστη.
+- Οπτική μασκότ με καταγεγραμμένα δικαιώματα και calibration της βαθμολογίας.
 
 ### 4.3 Εκτός αρχικού scope
 

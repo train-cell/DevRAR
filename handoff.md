@@ -3,7 +3,89 @@ last_modified: 2026-10-27
 tags: [feature, handoff]
 ---
 
-# DevRAR v0.1 state
+# DevRAR current state — v0.2 candidate
+
+## Paused checkpoint — 27 October 2026, 23:03 Europe/Athens
+
+The owner explicitly requested the nearest checkpoint, handoff and closure for
+today. The goal tool returned **paused**. Do not resume the full-vision loop
+without a new owner instruction. No agents or application servers remain active.
+This is a verified development checkpoint, not full-vision completion or release.
+
+Workspace: `C:/Users/skyd3/antigarvity/DevRAR`.
+Branch: `codex/full-vision-recap`, based on `origin/main` `df6a39b` (same tree as
+baseline `c14927a`). Version: **0.2.0 preview**. PR #1 was merged by the owner;
+the expansion belongs in a NEW draft PR, never PR #1. No agent merge is allowed.
+Closure commits/push are restricted to this repository. Use Git to read the
+checkpoint SHA; private reports/build environments remain ignored. No stashes.
+
+### Read first
+
+- `C:/Users/skyd3/antigarvity/DevRAR/AGENTS.md`
+- `C:/Users/skyd3/antigarvity/DevRAR/tasks/todo.md`
+- `C:/Users/skyd3/antigarvity/DevRAR/tasks/wave-two.md`
+- `C:/Users/skyd3/antigarvity/DevRAR/docs/expanded-recap.md`
+- `C:/Users/skyd3/antigarvity/DevRAR/docs/report-schema.md`
+- `C:/Users/skyd3/antigarvity/DevRAR/docs/checkpoint-20261027.md`
+
+### Implemented and locally verified
+
+- [x] OpenCode read-only SQLite; scoped Gemini and Antigravity adapters.
+- [x] Full-stream hourly/day/interval/check metrics, evidence-linked outcomes,
+  compatible comparisons, Git deltas and supplied time/cost imports.
+- [x] Recognition/profile, richer demo, Markdown for main domains, SVG/PNG.
+- [x] Original default and Blue hour; offline, mobile, keyboard and share privacy.
+- [x] Modern Codex assistant deduplication plus separate commands, patches,
+  collaboration and request-usage subset. No duplicate global tool/token counts.
+- [x] Separate native command coaching in HTML/JSON; null usage if no known rows.
+- [x] Explicit opt-in cloud CLI/provider with strict citations, bounded redacted
+  requests, safe failure/rules fallback. Synthetic mocked network tests only.
+- [x] Final idle-threshold regression fixed: main/native channels both use the
+  CLI value and report `idle_minutes`; 20-minute pair accepted at threshold 30.
+
+Fresh closure results: **518 passed, 2 skipped, 100% line coverage (4,442
+statements)**; **23 browser tests passed**; Ruff, strict source mypy and JS syntax
+passed; wheel/sdist built; a separate venv installed the wheel. Installed demo
+exit 0 and actual native Codex exit 3 (documented incomplete coverage) passed.
+Native commands/request usage appeared, nested outcomes were generated, threshold
+30 propagated, and source SHA-256 stayed unchanged. No cloud request was made.
+Local proof: `C:/Users/skyd3/antigarvity/DevRAR/artifacts/checkpoint-20261027/`.
+Older native/import/compare and rendered proof lives in ignored
+`artifacts/vision-check` and `artifacts/vision-review`; do not publish these.
+
+### Pending / known limits
+
+- [ ] Remote CI for the newly pushed checkpoint is not yet verified here.
+- [ ] Complete modern Codex native-channel Markdown/`tekmiria.jsonl` parity in
+  `src/devrar/report_extras.py` / `src/devrar/anafora.py`; HTML/JSON already work.
+- [ ] Independent integrated wave-two review; source/UI/backend review happened
+  in slices. UI worker hit a quota limit; root inspected/integrated its output
+  and all 23 browser checks passed. Do not infer a final independent sign-off.
+- [ ] Broader native-format validation, richer task/code-outcome correlation,
+  arbitrary date/project interaction filters, extra UI languages and visual mascot.
+- [ ] Real human calibration/agreement before numerical grades. Scores stay null.
+- [ ] Real provider interoperability pilot if explicitly authorised; synthetic
+  cloud transport tests do not prove support for every provider/model.
+
+No unresolved failing local test is known. The first closure coverage run was
+99.59%: source formatting during the run displaced wrapper line positions, and
+native duplicate/unknown-time branches needed a real regression. The clean rerun
+after adding that regression reached 100%; do not edit source during coverage.
+Socket timeout in cloud transport is not an absolute whole-request deadline.
+Native request usage is always an incomplete subset, not a global token total.
+No raw transcript commands were executed. No DB migration or new runtime package
+dependency was added. New optional key: `DEVRAR_CLOUD_API_KEY` (name only; never
+save its value); `OPENCODE_DB` overrides discovery; `DEVRAR_BROWSER_TESTS=1`
+enables browser checks. Numerical rating gates remain closed.
+
+NEXT_STEP_TO_EXECUTE (only after owner resumes): in
+`C:/Users/skyd3/antigarvity/DevRAR`, run
+`gh pr checks codex/full-vision-recap` and inspect the first failing job, if any,
+before beginning the native Markdown/evidence parity task above.
+
+CHECKPOINT_VERIFIED_LOCALLY; FULL_VISION_PENDING; GOAL_PAUSED_BY_OWNER.
+
+## Historical v0.1 delivery
 
 Workspace: `C:/Users/skyd3/antigarvity/DevRAR`.
 Repository: https://github.com/train-cell/DevRAR.
@@ -97,7 +179,7 @@ Full-stream metrics and bounded evidence are separate. Up to 600 redacted
 500-character excerpts feed rules analysis; local inference sees a smaller,
 explicitly bounded sample. Automated redaction does not imply anonymization.
 
-## NEXT_STEP_TO_EXECUTE
+## Historical v0.1 next step (superseded)
 
 Owner review of PR #1 and a personal pilot with explicitly selected local
 sources. Merge is the owner's action. The implementation branch is usable now

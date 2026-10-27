@@ -3,6 +3,21 @@
 from devrar.deigma import fortose_deigma
 
 
+def test_deigma_emperiexei_pliri_synepi_work_metrics() -> None:
+    """Το synthetic stream δίνει συνεπή totals και parsed check outcomes."""
+    dedomena = fortose_deigma()
+    assert "metrika_ergasias" in dedomena
+    assert sum(ora["prompts"] for ora in dedomena["metrika_ergasias"]["ora"]) == 1074
+    assert dedomena["metrika_ergasias"]["test_summary"]["passed"] > 0
+    assert dedomena["metrika_ergasias"]["test_summary"]["failed"] > 0
+    assert dedomena["epeisodia_ergasias"]["katastasi"] != "unknown"
+    assert any(
+        paratirisi["katastasi"] == "mixed"
+        for paratirisi in dedomena["epeisodia_ergasias"]["paratiriseis"]
+    )
+    assert dedomena["sygkrisi"]["katastasi"] == "compatible"
+
+
 def test_synthetikes_diastaseis_menoun_xoris_vathmo() -> None:
     """Οι πέντε rubric dimensions παραμένουν χωρίς επινοημένο grade."""
     dedomena = fortose_deigma()

@@ -9,8 +9,10 @@ import logging
 import os
 import subprocess
 from collections import Counter, defaultdict
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from datetime import date, datetime
+from functools import partial
 from pathlib import Path
 from typing import (
     BinaryIO,
@@ -29,6 +31,9 @@ from devrar.apantiseis import (
     SyllogistisCodexApantiseon,
 )
 from devrar.aporrita import katharise_aporrita
+from devrar.codex_native import ApotelesmaCodexNative, anagnorise_native
+from devrar.metrika import SyllogistisMetrikon
+from devrar.symvanta import SymvanErgasias
 from devrar.xrisi import (
     ApotelesmaClaudeXrisis,
     SyllogistisClaudeXrisis,
@@ -63,6 +68,7 @@ ZSTANDARD_DIATHESIMO = zstandard is not None
 ZSTANDARD_SFALMA = zstandard.ZstdError if zstandard is not None else RuntimeError
 
 logger = logging.getLogger(__name__)
+ParatiritisSymvanton = Callable[[SymvanErgasias], None]
 
 
 class MetrikesAnaforas(TypedDict):
@@ -122,6 +128,193 @@ class KalypsiTokens(TypedDict):
 
     piges: dict[str, KalypsiPigisTokens]
     pliris: bool
+
+
+class MetrikesXrisisNative(TypedDict):
+    """Per-response sums stay separate from overall token completeness."""
+
+    known_records: int
+    duplicate_records: int
+    invalid_records: int
+    sums: dict[str, int]
+    complete: bool
+
+
+class KalypsiCodexNative(TypedDict):
+    """Selected-period coverage for supported modern Codex native rows."""
+
+    recognized_records: int
+    unknown_records: int
+    excluded_unknown_timestamps: int
+    complete: bool
+
+
+@dataclass
+class SyllogistisCodexNative:
+    """Μετρά native rows χωριστά από legacy/global Codex counters."""
+
+    zoni: str
+    lepta_adraneias: int = 15
+    recognized_records: int = 0
+    unknown_records: int = 0
+    excluded_unknown_timestamps: int = 0
+    assistant_projections: int = 0
+    commands: int = 0
+    explicit_exits: int = 0
+    command_exit_success: int = 0
+    command_exit_failure: int = 0
+    command_exit_unknown: int = 0
+    patch_records: int = 0
+    changed_files: int = 0
+    collaboration_records: int = 0
+    inter_agent_messages: int = 0
+    usage_known_records: int = 0
+    usage_duplicate_records: int = 0
+    usage_invalid_records: int = 0
+    ids_egrafon: set[tuple[str, str]] = field(default_factory=set)
+    ids_xrisis: set[tuple[str, str]] = field(default_factory=set)
+    nimata_agenton: set[str] = field(default_factory=set)
+    athroismata_xrisis: dict[str, int] = field(
+        default_factory=lambda: {
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 0,
+            "reasoning_output_tokens": 0,
+            "recorded_total_tokens": 0,
+        }
+    )
+    metrika_ergasias: SyllogistisMetrikon = field(init=False)
+
+    def __post_init__(self) -> None:
+        """Απομονώνει native command episodes από τα κύρια work metrics."""
+        self.metrika_ergasias = SyllogistisMetrikon(
+            self.zoni, idle_minutes=self.lepta_adraneias
+        )
+
+    def agnosto(self) -> None:
+        """Μετρά unsupported native candidate ώστε να παραμένει partial."""
+        self.unknown_records += 1
+
+    def prosthese(
+        self,
+        native: ApotelesmaCodexNative,
+        synedria: str,
+    ) -> None:
+        """Μετρά recognized row μία φορά και δίνει commands σε isolated metrics."""
+        if native.katigoria == "usage" and native.xrisi is not None:
+            usage_key = (native.xrisi.synedria_id, native.xrisi.apantisi_id)
+            if usage_key in self.ids_xrisis:
+                self.usage_duplicate_records += 1
+                self.recognized_records += 1
+                return
+        kleidi = (native.katigoria, f"{synedria}\0{native.tautotita}")
+        if native.katigoria == "usage" and native.xrisi is not None:
+            kleidi = (
+                native.katigoria,
+                f"{native.xrisi.synedria_id}\0{native.xrisi.apantisi_id}",
+            )
+        if kleidi in self.ids_egrafon:
+            return
+        self.ids_egrafon.add(kleidi)
+        self.recognized_records += 1
+        if native.katigoria == "assistant":
+            self.assistant_projections += 1
+        elif native.katigoria == "command":
+            self.commands += 1
+            if native.kodikos_exodou is None:
+                self.command_exit_unknown += 1
+            else:
+                self.explicit_exits += 1
+                if native.kodikos_exodou == 0:
+                    self.command_exit_success += 1
+                else:
+                    self.command_exit_failure += 1
+            self.metrika_ergasias.prosthese(
+                {
+                    "id": f"{synedria}:native-command:{native.tautotita}",
+                    "pigi": "Codex native command events",
+                    "synedria": synedria,
+                    "goneas": None,
+                    "chronos": native.chronos,
+                    "rolos": "tool",
+                    "eidos": "tool_result",
+                    "keimeno": katharise_aporrita(native.exodos_entolis or ""),
+                    "locator": native.tautotita,
+                    "ergaleio": None,
+                    "montelo": None,
+                    "kodikos_exodou": native.kodikos_exodou,
+                }
+            )
+        elif native.katigoria == "file_change":
+            self.patch_records += 1
+            changed_files = native.synopsi.get("change_count")
+            if isinstance(changed_files, int) and not isinstance(changed_files, bool):
+                self.changed_files += changed_files
+        elif native.katigoria == "collaboration":
+            self.collaboration_records += 1
+            child_id = native.synopsi.get("agent_thread_id")
+            if isinstance(child_id, str):
+                self.nimata_agenton.add(child_id)
+        elif native.katigoria == "inter_agent":
+            self.inter_agent_messages += 1
+        elif native.katigoria == "usage" and native.xrisi is not None:
+            xrisi = native.xrisi
+            usage_key = (xrisi.synedria_id, xrisi.apantisi_id)
+            self.ids_xrisis.add(usage_key)
+            self.usage_known_records += 1
+            self.athroismata_xrisis["input_tokens"] += xrisi.eisagomena_tokens
+            self.athroismata_xrisis["cached_input_tokens"] += (
+                xrisi.apothikevmena_eisagomena_tokens
+            )
+            self.athroismata_xrisis["cache_write_input_tokens"] += (
+                xrisi.grammena_cache_tokens
+            )
+            self.athroismata_xrisis["output_tokens"] += xrisi.paragomena_tokens
+            self.athroismata_xrisis["reasoning_output_tokens"] += (
+                xrisi.reasoning_paragomena_tokens
+            )
+            self.athroismata_xrisis["recorded_total_tokens"] += (
+                xrisi.recorded_synolika_tokens
+            )
+
+    def invalid_usage(self) -> None:
+        """Μετρά native usage envelope με άκυρα ή ελλιπή counters."""
+        self.usage_invalid_records += 1
+
+    def sto_schema(self) -> dict[str, object]:
+        """Επιστρέφει observed-only report με χωριστό usage και work metrics."""
+        return {
+            "adapter": "codex-native-v1",
+            "coverage": {
+                "recognized_records": self.recognized_records,
+                "unknown_records": self.unknown_records,
+                "excluded_unknown_timestamps": self.excluded_unknown_timestamps,
+                "complete": False,
+            },
+            "assistant_projections": self.assistant_projections,
+            "commands": self.commands,
+            "explicit_exits": self.explicit_exits,
+            "command_exit_success": self.command_exit_success,
+            "command_exit_failure": self.command_exit_failure,
+            "command_exit_unknown": self.command_exit_unknown,
+            "patch_records": self.patch_records,
+            "changed_files": self.changed_files,
+            "collaboration_records": self.collaboration_records,
+            "linked_agent_threads": len(self.nimata_agenton),
+            "inter_agent_messages": self.inter_agent_messages,
+            "usage": {
+                "method": "per_response_id_dedup",
+                "known_records": self.usage_known_records,
+                "duplicate_records": self.usage_duplicate_records,
+                "invalid_records": self.usage_invalid_records,
+                "sums": dict(self.athroismata_xrisis)
+                if self.usage_known_records
+                else None,
+                "complete": False,
+            },
+            "metrika_ergasias": self.metrika_ergasias.apotelesma(),
+        }
 
 
 class PeriodosDiathesimon(TypedDict):
@@ -232,6 +425,12 @@ EIDI_MITRWTIKOU_CONTEXT = {
     "additional_content.codex_apps_open_page",
 }
 CODEX_METADATA_TYPES = {"queue_operation", "token_count"}
+CODEX_STRUCTURAL_TYPES = {
+    "world_state",
+    "inter_agent_communication_metadata",
+    "compacted",
+}
+CODEX_LIFECYCLE_TYPES = {"task_started", "thread_settings_applied"}
 PROEPILEGOMENA_PATHS = {
     "claude": Path.home() / ".claude" / "projects",
     "codex": Path.home() / ".codex" / "sessions",
@@ -312,6 +511,8 @@ def syllexe_dedomena(
     eos: date | None = None,
     zoni: str = "Europe/Athens",
     author: str | None = None,
+    paratiritis: ParatiritisSymvanton | None = None,
+    idle_minutes: int = 15,
 ) -> dict[str, object]:
     """Διαβάζει τοπικά AI JSONL και δηλωμένα Git repos και επιστρέφει report v1."""
     if apo is not None and eos is not None and apo > eos:
@@ -351,6 +552,9 @@ def syllexe_dedomena(
     syllogistis_claude_xrisis = SyllogistisClaudeXrisis()
     syllogistis_codex_xrisis = SyllogistisCodexXrisis()
     syllogistis_codex_apantiseon = SyllogistisCodexApantiseon()
+    syllogistis_codex_native = (
+        SyllogistisCodexNative(zoni, idle_minutes) if "codex" in piges else None
+    )
 
     for pigi in dict.fromkeys(piges):
         if pigi not in PIGES:
@@ -413,6 +617,8 @@ def syllexe_dedomena(
                         zoni=zonh_anaforas,
                         apo=apo,
                         eos=eos,
+                        paratiritis=paratiritis,
+                        syllogistis_codex_native=syllogistis_codex_native,
                     )
                 if not diavase_esto:
                     sfalmata_arxeiou += 1
@@ -517,6 +723,9 @@ def syllexe_dedomena(
             deigma_apantisis.seira,
             deigmata,
             kalypsi_analysi,
+            paratiritis=paratiritis,
+            chronos=deigma_apantisis.chronos,
+            montelo=deigma_apantisis.modelo,
         )
     if dedup_apantiseon.amfigies:
         for pigi_row in piges_report:
@@ -673,6 +882,11 @@ def syllexe_dedomena(
     }
     deigmata.sort(key=lambda deigma: _seira_deigmatos(deigma, seira_pigon))
     return {
+        **(
+            {"codex_native": syllogistis_codex_native.sto_schema()}
+            if syllogistis_codex_native is not None
+            else {}
+        ),
         "ekdosi_sximatos": "1",
         "leitourgia": "live",
         "periodos": {
@@ -810,21 +1024,81 @@ def _einai_eggrafi_anagnorismeni(pigi: str, eggrafi: dict[str, object]) -> bool:
     payload_obj = eggrafi.get("payload")
     payload = payload_obj if isinstance(payload_obj, dict) else {}
     if pigi == "claude":
+        if _einai_claude_replay(eggrafi):
+            return True
         if typos in CLAUDE_TYPOS_EGGRAFON:
             return True
         return any(
             kleidi in eggrafi or kleidi in payload for kleidi in CLAUDE_METADATA_KEYS
         )
+    if pigi == "codex" and _einai_native_candidate(eggrafi):
+        return anagnorise_native(eggrafi) is not None
     if typos in {"session_meta", "turn_context"}:
+        return isinstance(payload_obj, dict)
+    if typos in CODEX_STRUCTURAL_TYPES:
         return isinstance(payload_obj, dict)
     if typos in CODEX_METADATA_TYPES:
         return isinstance(payload_obj, dict) or (
             typos == "queue_operation" and isinstance(eggrafi.get("operation"), str)
         )
     if typos == "event_msg":
-        return _proto_keimeno(payload.get("type")) in CODEX_EVENT_TYPES
+        return (
+            _proto_keimeno(payload.get("type"))
+            in CODEX_EVENT_TYPES | CODEX_LIFECYCLE_TYPES
+        )
     if typos == "response_item":
         return _proto_keimeno(payload.get("type")) in CODEX_RESPONSE_TYPES
+    return False
+
+
+def _einai_native_candidate(eggrafi: dict[str, object]) -> bool:
+    """Επιλέγει μόνο τα νέα native envelopes που έχει decoder contract."""
+    typos = eggrafi.get("type")
+    payload_obj = eggrafi.get("payload")
+    if not isinstance(payload_obj, dict):
+        return typos == "token_usage_record"
+    if typos == "event_msg":
+        return payload_obj.get("type") == "item_completed"
+    if typos == "response_item":
+        return payload_obj.get("type") == "agent_message"
+    return typos == "token_usage_record"
+
+
+def _native_ento_periodou(
+    eggrafi: dict[str, object],
+    zoni: ZoneInfo,
+    apo: date | None,
+    eos: date | None,
+) -> bool:
+    """Ελέγχει selected-period scope χωρίς να εντάσσει άγνωστους χρόνους."""
+    if apo is None and eos is None:
+        return True
+    payload_obj = eggrafi.get("payload")
+    payload = payload_obj if isinstance(payload_obj, dict) else {}
+    chronos = _proto_keimeno(eggrafi.get("timestamp"), payload.get("timestamp"))
+    imera = _imerominia_zonis(chronos, zoni)
+    if imera is None:
+        return False
+    return not ((apo is not None and imera < apo) or (eos is not None and imera > eos))
+
+
+def _einai_claude_replay(eggrafi: dict[str, object]) -> bool:
+    """Αναγνωρίζει συγκεκριμένα replay envelopes χωρίς να διαβάζει τα messages τους."""
+    typos = eggrafi.get("type")
+    if typos == "api-request-shape":
+        return isinstance(eggrafi.get("shapeHash"), str) and isinstance(
+            eggrafi.get("shape"), dict
+        )
+    if typos == "api-request-blob":
+        return isinstance(eggrafi.get("hash"), str) and isinstance(
+            eggrafi.get("message"), dict
+        )
+    if typos == "api-request":
+        return (
+            isinstance(eggrafi.get("params"), dict)
+            and isinstance(eggrafi.get("shapeHash"), str)
+            and isinstance(eggrafi.get("requestDigest"), str)
+        )
     return False
 
 
@@ -849,6 +1123,8 @@ def _diavase_arxeio(
     zoni: ZoneInfo,
     apo: date | None,
     eos: date | None,
+    paratiritis: ParatiritisSymvanton | None = None,
+    syllogistis_codex_native: SyllogistisCodexNative | None = None,
 ) -> tuple[bool, int, int, bool]:
     """Διαβάζει JSONL γραμμή-γραμμή, κρατώντας έγκυρα records μετά από σφάλματα."""
     diavase_esto = False
@@ -875,10 +1151,31 @@ def _diavase_arxeio(
             sfalmata += 1
             continue
         diavase_esto = True
+        native_candidate = pigi == "codex" and _einai_native_candidate(eggrafi)
+        native_result = anagnorise_native(eggrafi) if native_candidate else None
+        if native_candidate and native_result is None:
+            entos_periodou = _native_ento_periodou(eggrafi, zoni, apo, eos)
+            timestamp = _proto_keimeno(eggrafi.get("timestamp"))
+            imera_agnosti = (apo is not None or eos is not None) and (
+                _imerominia_zonis(timestamp, zoni) is None
+            )
+            if syllogistis_codex_native is not None and entos_periodou:
+                syllogistis_codex_native.agnosto()
+                if eggrafi.get("type") == "token_usage_record":
+                    syllogistis_codex_native.invalid_usage()
+            elif syllogistis_codex_native is not None and imera_agnosti:
+                timestamp = _proto_keimeno(eggrafi.get("timestamp"))
+                if _imerominia_zonis(timestamp, zoni) is None:
+                    syllogistis_codex_native.excluded_unknown_timestamps += 1
+            if entos_periodou or imera_agnosti:
+                sfalmata += 1
+            continue
         if not _einai_eggrafi_anagnorismeni(pigi, eggrafi):
             sfalmata += 1
             continue
         eixe_morfi_anagnorismeni = True
+        if pigi == "claude" and _einai_claude_replay(eggrafi):
+            continue
         payload_obj = eggrafi.get("payload")
         payload = payload_obj if isinstance(payload_obj, dict) else {}
         minima_obj = eggrafi.get("message") or payload.get("message")
@@ -929,6 +1226,9 @@ def _diavase_arxeio(
             syllogistis_codex_xrisis,
             syllogistis_codex_apantiseon,
             energo_turn_id,
+            paratiritis=paratiritis,
+            native_result=native_result,
+            syllogistis_codex_native=syllogistis_codex_native,
         )
         if agnostos_chronos:
             agnostoi_chronoi += 1
@@ -959,6 +1259,9 @@ def _kanonikopoihse_eggrafi(
     syllogistis_codex_xrisis: SyllogistisCodexXrisis,
     syllogistis_codex_apantiseon: SyllogistisCodexApantiseon,
     energo_turn_id: str | None,
+    paratiritis: ParatiritisSymvanton | None = None,
+    native_result: ApotelesmaCodexNative | None = None,
+    syllogistis_codex_native: SyllogistisCodexNative | None = None,
 ) -> bool:
     """Κανονικοποιεί record Claude ή Codex χωρίς να εκτελεί imported content."""
     fortio_obj = eggrafi.get("payload")
@@ -1105,6 +1408,15 @@ def _kanonikopoihse_eggrafi(
                     einai_apantisi = einai_reply_codex
             elif typos_antikeimenou in {"function_call", "custom_tool_call"}:
                 kliseis = 1
+    if (
+        native_result is not None
+        and native_result.katigoria == "assistant"
+        and native_result.provoli_assistant is not None
+    ):
+        keimeno_apantisis = native_result.provoli_assistant.keimeno
+        kanal_apantisis = "response_item"
+        einai_reply_codex = bool(keimeno_apantisis)
+        einai_apantisi = einai_reply_codex
     einai_prompt_anthropino = (
         einai_prompt
         and not goneas
@@ -1120,15 +1432,24 @@ def _kanonikopoihse_eggrafi(
             or kliseis
             or einai_record_assistant_claude
             or einai_codex_snapshot
+            or native_result is not None
         )
         and imera is None
     ):
+        if native_result is not None and syllogistis_codex_native is not None:
+            syllogistis_codex_native.excluded_unknown_timestamps += 1
         return True
+    if native_result is not None and syllogistis_codex_native is not None:
+        syllogistis_codex_native.prosthese(
+            native_result, synedria_id or efedriki_synedria
+        )
     if einai_record_assistant_claude:
         syllogistis_claude_xrisis.prosthese(eggrafi)
     if einai_codex_snapshot:
         syllogistis_codex_xrisis.prosthese(eggrafi)
     tautotita = _tautotita_eggrafis(eggrafi, fortio, pigi)
+    if native_result is not None and native_result.katigoria == "assistant":
+        tautotita = native_result.tautotita
     einai_diplotypi_tautotita = bool(tautotita and tautotita in ids_diplotypwn)
     if einai_diplotypi_tautotita:
         return False
@@ -1202,6 +1523,9 @@ def _kanonikopoihse_eggrafi(
         imera,
         deigmata,
         kalypsi_analysi,
+        paratiritis=paratiritis,
+        chronos=chronos,
+        montelo=modelo,
     )
     yparxei_drastiriotita = (
         einai_prompt or einai_apantisi or einai_reply_codex or bool(kliseis)
@@ -1256,6 +1580,9 @@ def _prosthese_apodeixeis(
     imera: date | None,
     deigmata: list[Deigma],
     kalypsi_analysi: KalypsiAnalysi,
+    paratiritis: ParatiritisSymvanton | None = None,
+    chronos: str | None = None,
+    montelo: str | None = None,
 ) -> None:
     """Εξάγει μόνο αναγνωρισμένο, deduped evidence με provenance περιορισμένο."""
     prompt_asfales = (
@@ -1276,8 +1603,15 @@ def _prosthese_apodeixeis(
     )
     imerominia = imera.isoformat() if imera else None
     arithmos = 0
+    prosthese = partial(
+        _prosthese_deigma,
+        paratiritis=paratiritis,
+        chronos=chronos,
+        goneas=goneas,
+        montelo=montelo,
+    )
     if prompt_asfales and keimeno_prompt:
-        _prosthese_deigma(
+        prosthese(
             pigi,
             tautotita,
             synedria,
@@ -1294,7 +1628,7 @@ def _prosthese_apodeixeis(
     if einai_apantisi:
         keimeno_apantisis = _keimeno_keimenou(periexomeno, {"text", "output_text"})
         if keimeno_apantisis:
-            _prosthese_deigma(
+            prosthese(
                 pigi,
                 tautotita,
                 synedria,
@@ -1317,7 +1651,7 @@ def _prosthese_apodeixeis(
             if block.get("type") == "tool_use":
                 onoma_ergaleiou = _proto_keimeno(block.get("name"))
                 if onoma_ergaleiou:
-                    _prosthese_deigma(
+                    prosthese(
                         pigi,
                         tautotita or _proto_keimeno(block.get("id")),
                         synedria,
@@ -1336,7 +1670,7 @@ def _prosthese_apodeixeis(
                     block.get("content"), {"text", "output_text"}
                 )
                 if apotelesma:
-                    _prosthese_deigma(
+                    prosthese(
                         pigi,
                         tautotita or _proto_keimeno(block.get("tool_use_id")),
                         synedria,
@@ -1360,7 +1694,7 @@ def _prosthese_apodeixeis(
                 fortio.get("name"), fortio.get("tool_name"), fortio.get("tool")
             )
             if onoma_ergaleiou:
-                _prosthese_deigma(
+                prosthese(
                     pigi,
                     tautotita,
                     synedria,
@@ -1384,7 +1718,7 @@ def _prosthese_apodeixeis(
                 fortio.get("output"), fortio.get("content"), fortio.get("result")
             )
             if apotelesma:
-                _prosthese_deigma(
+                prosthese(
                     pigi,
                     tautotita or _proto_keimeno(fortio.get("call_id")),
                     synedria,
@@ -1466,17 +1800,40 @@ def _prosthese_deigma(
     arithmos: int,
     deigmata: list[Deigma],
     kalypsi_analysi: KalypsiAnalysi,
+    paratiritis: ParatiritisSymvanton | None = None,
+    chronos: str | None = None,
+    goneas: str | None = None,
+    montelo: str | None = None,
+    kodikos_exodou: int | None = None,
 ) -> None:
     """Redacts, truncates and appends one eligible evidence row within the cap."""
-    kalypsi_analysi["diathesima"] += 1
-    if len(deigmata) >= ORIA_DEIGMATON:
-        kalypsi_analysi["perikopi"] = True
-        return
-    katharo = katharise_aporrita(keimeno)[:ORIA_MIKOUS_DEIGMATOS]
+    plires_katharo = katharise_aporrita(keimeno)
     tautotita_kleidiou = tautotita or locator
     row_id = hashlib.sha256(
         f"{pigi}\0{tautotita_kleidiou}\0{eidos}\0{arithmos}".encode("utf-8")
     ).hexdigest()[:16]
+    if paratiritis is not None:
+        paratiritis(
+            {
+                "id": row_id,
+                "pigi": PIGES[pigi],
+                "synedria": synedria,
+                "goneas": goneas,
+                "chronos": chronos,
+                "rolos": rolos,
+                "eidos": eidos,
+                "keimeno": plires_katharo,
+                "locator": locator,
+                "ergaleio": keimeno if eidos == "tool_call" else None,
+                "montelo": montelo,
+                "kodikos_exodou": kodikos_exodou,
+            }
+        )
+    kalypsi_analysi["diathesima"] += 1
+    if len(deigmata) >= ORIA_DEIGMATON:
+        kalypsi_analysi["perikopi"] = True
+        return
+    katharo = plires_katharo[:ORIA_MIKOUS_DEIGMATOS]
     deigmata.append(
         {
             "id": row_id,

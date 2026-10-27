@@ -3,7 +3,14 @@
 
   const KINISI_AUTO_MS = 6200;
   const KINISI_METRISI_MS = 900;
+  const MAX_ACTIVITY_CALENDAR_DAYS = 366;
+  const MAX_COMPARISON_CARDS = 18;
+  const HOURS_PER_DAY = 24;
+  const SECONDS_PER_MINUTE = 60;
+  const SECONDS_PER_HOUR = 3600;
   const KATYSTERISI_ANAKLISIS_BLOB_MS = 1500;
+  const PLATOS_SHARE_PNG = 1080;
+  const YPSOS_SHARE_PNG = 1350;
   const MIN_POSITIVE_RECOGNITION_COUNT = 1;
   const MAX_RECOGNITION_BADGES = 3;
   const MEGISTO_EPOMENA_VIMATA = 3;
@@ -546,6 +553,13 @@
 
   /** Adds up to three positive, recorded-fact badges to the recognition chapter. */
   function prosthesBadgeAnagnorisis(goneas) {
+    const anagnorisi = dedomena.anagnorisi;
+    if (anagnorisi && anagnorisi.profile) {
+      const profile = asto(goneas, "button", "scene-pill recognition-profile-label",
+        keimeno(anagnorisi.profile, "titlos", "Your activity profile"));
+      profile.type = "button";
+      profile.addEventListener("click", () => anoixeProfileAnagnorisis(profile));
+    }
     const protaseis = [];
     if (einaiMetrikoPositiko(synola.imeres))
       protaseis.push({
@@ -580,6 +594,40 @@
       );
       lista.append(koumpi);
     });
+  }
+
+  /** Explains a playful report label with its recorded basis and inference limits. */
+  function anoixeProfileAnagnorisis(energopoiitis) {
+    const anagnorisi = dedomena.anagnorisi;
+    anoixeLeptomereia(metrika(
+      keimeno(anagnorisi.profile, "titlos", "Your activity profile"),
+      null, "descriptive activity label",
+      keimeno(anagnorisi.profile, "aitia"), "Selected report aggregates",
+    ), energopoiitis);
+    stoixeia("dialog-body").querySelector(".dialog-value").hidden = true;
+    asto(stoixeia("dialog-body"), "p", "dialog-description",
+      keimeno(anagnorisi, "periorismos"));
+  }
+
+  /** Presents personal highlights derived from measured activity, without a grade. */
+  function prosthesAnagnorisi(goneas) {
+    const anagnorisi = dedomena.anagnorisi;
+    if (!anagnorisi || !anagnorisi.profile) return;
+    const panel = asto(goneas, "section", "recognition-panel");
+    asto(panel, "p", "eyebrow", "THE SHAPE OF YOUR WORK");
+    asto(panel, "h2", "", "Your work, replayed.");
+    const koumpi = asto(panel, "button", "scene-pill",
+      keimeno(anagnorisi.profile, "titlos", "Your activity profile"));
+    koumpi.type = "button";
+    koumpi.addEventListener("click", () => anoixeProfileAnagnorisis(koumpi));
+    const lista = asto(panel, "div", "recognition-highlights");
+    const highlights = Array.isArray(anagnorisi.highlights) ? anagnorisi.highlights : [];
+    highlights.forEach((grammi) => {
+      const karta = asto(lista, "div", "recognition-highlight");
+      asto(karta, "h3", "", keimeno(grammi, "titlos"));
+      asto(karta, "p", "", keimeno(grammi, "keimeno"));
+    });
+    asto(panel, "p", "dialog-description", keimeno(anagnorisi, "periorismos"));
   }
 
   /** Updates the clickable chapter progress strip. */
@@ -791,6 +839,560 @@
     goneas.append(karta);
   }
 
+  /** Reads finite, non-negative integer counters without coercing unknown values. */
+  function metrikoAkeraios(timiData) {
+    return Number.isSafeInteger(timiData) && timiData >= 0 ? timiData : null;
+  }
+
+  /** Returns a validated UTC calendar day for an ISO date key. */
+  function parsiImerominias(timiData) {
+    if (typeof timiData !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(timiData))
+      return null;
+    const imerominia = new Date(`${timiData}T00:00:00Z`);
+    return Number.isFinite(imerominia.getTime()) &&
+      imerominia.toISOString().slice(0, 10) === timiData
+      ? imerominia
+      : null;
+  }
+
+  /** Adds a calendar heatmap and hourly pattern from report-wide work metrics. */
+  function prosthesAnalysiDrastiriotitas(goneas) {
+    const metrikaErgasias = dedomena.metrika_ergasias;
+    if (!metrikaErgasias || typeof metrikaErgasias !== "object" || Array.isArray(metrikaErgasias)) {
+      prosthesEisagomenouXronouKaiKostous(goneas);
+      prosthesCodexNative(goneas);
+      return;
+    }
+    const panel = asto(goneas, "section", "work-metrics-panel");
+    panel.setAttribute("aria-label", "Recorded activity patterns and outcomes");
+    asto(panel, "p", "eyebrow", "RECORDED WORK SIGNALS");
+    asto(panel, "h2", "work-metrics-title", "When the work showed up.");
+    asto(
+      panel,
+      "p",
+      "work-metrics-note",
+      "Report-wide recorded aggregates. The source filter does not apply where per-source hour or date totals are unavailable.",
+    );
+    const grid = asto(panel, "div", "work-metrics-grid");
+    prosthesHeatmapImeron(grid, metrikaErgasias.imeres);
+    prosthesKatanomiOrias(grid, metrikaErgasias.ora, metrikaErgasias.zoni);
+    prosthesSynopsiApotelesmaton(grid, metrikaErgasias);
+    prosthesEisagomenouXronouKaiKostous(panel);
+    prosthesCodexNative(goneas);
+  }
+
+  /** Renders additive Codex-native counters as an explicitly incomplete observed subset. */
+  function prosthesCodexNative(goneas) {
+    const native = dedomena.codex_native;
+    if (!native || typeof native !== "object" || Array.isArray(native)) return;
+    const panel = asto(goneas, "section", "codex-native-panel");
+    panel.setAttribute("aria-label", "Codex native observed subset");
+    asto(panel, "p", "eyebrow", "CODEX NATIVE · OBSERVED SUBSET");
+    asto(panel, "h2", "", "Native records, kept in their own lane.");
+    asto(
+      panel,
+      "p",
+      "codex-native-note",
+      "This is an observed subset with incomplete coverage. Native counters and recorded request usage are separate from legacy report totals.",
+    );
+    const coverage = native.coverage && typeof native.coverage === "object"
+      ? native.coverage
+      : {};
+    const summary = asto(panel, "div", "codex-native-grid");
+    const metricRows = [
+      ["Recognized records", coverage.recognized_records],
+      ["Unknown records", coverage.unknown_records],
+      ["Excluded unknown timestamps", coverage.excluded_unknown_timestamps],
+      ["Assistant projections", native.assistant_projections],
+      ["Commands", native.commands],
+      ["Explicit exits", native.explicit_exits],
+      ["Successful exits", native.command_exit_success],
+      ["Failed exits", native.command_exit_failure],
+      ["Unknown exit outcomes", native.command_exit_unknown],
+      ["Patch records", native.patch_records],
+      ["Changed files", native.changed_files],
+      ["Collaboration records", native.collaboration_records],
+      ["Linked agent threads", native.linked_agent_threads],
+      ["Inter-agent messages", native.inter_agent_messages],
+    ];
+    metricRows.forEach(([label, rawValue]) => {
+      const value = metrikoAkeraios(rawValue);
+      const row = asto(summary, "div", "codex-native-metric");
+      asto(row, "span", "", label);
+      asto(row, "strong", "", value === null ? "Not recorded" : arithmos(value));
+    });
+    asto(
+      panel,
+      "p",
+      "codex-native-limits",
+      "Coverage is incomplete; unknown records remain unknown. Linked thread records do not prove parent/child delegation. Patch records are not commits.",
+    );
+    prosthesCodexNativeUsage(panel, native.usage);
+    prosthesCodexNativeChecks(panel, native.metrika_ergasias);
+  }
+
+  /** Shows native request-token fields independently without adding subset counters. */
+  function prosthesCodexNativeUsage(goneas, usage) {
+    if (!usage || typeof usage !== "object" || Array.isArray(usage)) return;
+    const section = asto(goneas, "section", "codex-native-usage");
+    asto(section, "h3", "", "Recorded native request usage");
+    asto(
+      section,
+      "p",
+      "codex-native-note",
+      `Method: ${keimeno(usage, "method", "not recorded")} · known ${arithmos(metrikoAkeraios(usage.known_records))} · duplicate ${arithmos(metrikoAkeraios(usage.duplicate_records))} · invalid ${arithmos(metrikoAkeraios(usage.invalid_records))} · incomplete coverage.`,
+    );
+    const sums = usage.sums && typeof usage.sums === "object" && !Array.isArray(usage.sums)
+      ? usage.sums
+      : {};
+    const fields = [
+      ["Input tokens", "input_tokens"],
+      ["Cached input tokens · subset", "cached_input_tokens"],
+      ["Cache-write input tokens", "cache_write_input_tokens"],
+      ["Output tokens", "output_tokens"],
+      ["Reasoning output tokens · subset", "reasoning_output_tokens"],
+      ["Recorded request total", "recorded_total_tokens"],
+    ];
+    const list = asto(section, "dl", "codex-native-token-list");
+    fields.forEach(([label, key]) => {
+      const row = asto(list, "div", "codex-native-token-row");
+      asto(row, "dt", "", label);
+      const value = metrikoAkeraios(sums[key]);
+      asto(row, "dd", "", value === null ? "Not recorded" : arithmos(value));
+    });
+    asto(
+      section,
+      "p",
+      "codex-native-limits",
+      "Cached input and reasoning output are subset counters. Values are shown separately and are not added to each other or to legacy token totals.",
+    );
+  }
+
+  /** Renders only supplied native check counts, never a synthetic time chart. */
+  function prosthesCodexNativeChecks(goneas, metrics) {
+    if (!metrics || typeof metrics !== "object" || Array.isArray(metrics)) return;
+    const testSummary = metrics.test_summary;
+    if (!testSummary || typeof testSummary !== "object" || Array.isArray(testSummary)) return;
+    const section = asto(goneas, "section", "codex-native-checks");
+    asto(section, "h3", "", "Native command checks · observed");
+    const rows = [
+      ["Status", keimeno(testSummary, "status", "not recorded")],
+      ["Passed", metrikoAkeraios(testSummary.passed)],
+      ["Failed", metrikoAkeraios(testSummary.failed)],
+      ["Skipped", metrikoAkeraios(testSummary.skipped)],
+    ];
+    rows.forEach(([label, value]) => {
+      if (value === null || value === "not recorded") return;
+      asto(section, "p", "codex-native-check-row", `${label}: ${typeof value === "number" ? arithmos(value) : value}`);
+    });
+  }
+
+  /** Renders optional watcher and ledger imports with their supplied scope. */
+  function prosthesEisagomenouXronouKaiKostous(goneas) {
+    const xronos = dedomena.energos_xronos;
+    if (xronos && typeof xronos === "object" && !Array.isArray(xronos))
+      prosthesEisagomenouXronou(goneas, xronos);
+    const kostos = dedomena.kostos;
+    if (kostos && typeof kostos === "object" && !Array.isArray(kostos))
+      prosthesEisagomenouKostous(goneas, kostos);
+  }
+
+  /** Shows only valid active/AFK durations observed in explicitly supplied intervals. */
+  function prosthesEisagomenouXronou(goneas, xronos) {
+    const karta = asto(goneas, "article", "supplied-time-panel");
+    asto(karta, "h3", "", "Supplied watcher intervals");
+    const status = keimeno(xronos, "status", "unknown");
+    asto(karta, "span", "supplied-status", labelKatastasis(status));
+    asto(karta, "p", "supplied-scope", keimeno(xronos, "scope", "Scope not recorded."));
+    asto(karta, "p", "supplied-source", `Source: ${keimeno(xronos, "source", "Not recorded")}`);
+    const kalypsi = xronos.coverage;
+    if (kalypsi && typeof kalypsi === "object") {
+      const used = metrikoAkeraios(kalypsi.events_used);
+      const total = metrikoAkeraios(kalypsi.events_total);
+      const ignored = metrikoAkeraios(kalypsi.events_ignored);
+      if (used !== null || total !== null || ignored !== null)
+        asto(karta, "p", "supplied-coverage", `Coverage: ${used === null ? "Not recorded" : arithmos(used)} used of ${total === null ? "unknown" : arithmos(total)} supplied events · ${ignored === null ? "Not recorded" : arithmos(ignored)} ignored.`);
+    }
+    const validStatus = status === "ok" || status === "partial";
+    const active = validStatus ? metrikoDeuterolepta(xronos.active_seconds) : null;
+    const afk = validStatus ? metrikoDeuterolepta(xronos.afk_seconds) : null;
+    const totals = asto(karta, "div", "supplied-time-totals");
+    asto(totals, "p", "supplied-time-active", `Active in supplied intervals: ${active === null ? "Not available" : formatDuration(active)}.`);
+    asto(totals, "p", "supplied-time-afk", `AFK in supplied intervals: ${afk === null ? "Not available" : formatDuration(afk)}.`);
+    const days = Array.isArray(xronos.by_day) ? xronos.by_day : [];
+    const validDays = days.filter((row) =>
+      row && typeof row === "object" && parsiImerominias(row.date) &&
+      (metrikoDeuterolepta(row.active_seconds) !== null || metrikoDeuterolepta(row.afk_seconds) !== null),
+    );
+    if (validDays.length) {
+      const list = asto(karta, "ul", "supplied-day-list");
+      validDays.slice(-MAX_ACTIVITY_CALENDAR_DAYS).forEach((row) => {
+        const day = asto(list, "li", "supplied-day");
+        day.dataset.date = row.date;
+        const dayActive = metrikoDeuterolepta(row.active_seconds);
+        const dayAfk = metrikoDeuterolepta(row.afk_seconds);
+        day.textContent = `${row.date} · active ${dayActive === null ? "not recorded" : formatDuration(dayActive)} · AFK ${dayAfk === null ? "not recorded" : formatDuration(dayAfk)}`;
+      });
+    }
+    const note = keimeno(xronos, "note");
+    if (note) asto(karta, "p", "supplied-note", note);
+  }
+
+  /** Shows exact ledger decimal strings without combining currencies or kinds. */
+  function prosthesEisagomenouKostous(goneas, kostos) {
+    const karta = asto(goneas, "article", "supplied-cost-panel");
+    asto(karta, "h3", "", "Supplied cost ledger");
+    const status = keimeno(kostos, "status", "unknown");
+    asto(karta, "span", "supplied-status", labelKatastasis(status));
+    asto(karta, "p", "supplied-source", `Source: ${keimeno(kostos, "source", "Not recorded")}`);
+    const kalypsi = kostos.coverage;
+    if (kalypsi && typeof kalypsi === "object") {
+      const used = metrikoAkeraios(kalypsi.rows_used);
+      const total = metrikoAkeraios(kalypsi.rows_total);
+      const ignored = metrikoAkeraios(kalypsi.rows_ignored);
+      if (used !== null || total !== null || ignored !== null)
+        asto(karta, "p", "supplied-coverage", `Coverage: ${used === null ? "Not recorded" : arithmos(used)} used of ${total === null ? "unknown" : arithmos(total)} supplied rows · ${ignored === null ? "Not recorded" : arithmos(ignored)} ignored.`);
+    }
+    const note = keimeno(kostos, "note");
+    if (note) asto(karta, "p", "supplied-note", note);
+    const totals = asto(karta, "ul", "cost-totals");
+    const validStatus = status === "ok" || status === "partial";
+    const amountPattern = /^(?:0|[1-9]\d*)(?:\.\d+)?$/;
+    const rows = Array.isArray(kostos.totals) ? kostos.totals : [];
+    rows.forEach((row) => {
+      if (!validStatus || !row || typeof row !== "object") return;
+      const currency = keimeno(row, "currency");
+      const kind = keimeno(row, "kind");
+      const amount = keimeno(row, "amount");
+      if (!/^[A-Z]{3}$/.test(currency) || !["billed", "estimated"].includes(kind) || !amountPattern.test(amount)) return;
+      const line = asto(totals, "li", "cost-total", `${amount} ${currency} · ${kind === "billed" ? "Billed" : "Estimated"}`);
+      line.dataset.kind = kind;
+      line.dataset.currency = currency;
+    });
+    if (!totals.childElementCount)
+      asto(karta, "p", "empty-card cost-empty", validStatus ? "No valid supplied cost totals were recorded." : "Not available from the supplied ledger.");
+    asto(karta, "p", "cost-definition", "Billed and estimated amounts are separate records. Different currencies are not combined.");
+  }
+
+  /** Validates imported duration numbers without coercing null or numeric strings. */
+  function metrikoDeuterolepta(value) {
+    return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
+  }
+
+  /** Formats supplied durations without rounding fractional seconds away. */
+  function formatDuration(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return "Not available";
+    const hours = Math.floor(seconds / SECONDS_PER_HOUR);
+    const minutes = Math.floor((seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE);
+    const remaining = seconds % SECONDS_PER_MINUTE;
+    const parts = [];
+    if (hours) parts.push(`${hours}h`);
+    if (minutes || hours) parts.push(`${minutes}m`);
+    if (remaining || !parts.length) parts.push(`${new Intl.NumberFormat("en-US", { maximumFractionDigits: 3 }).format(remaining)}s`);
+    return parts.join(" ");
+  }
+
+  /** Maps imported status tokens to safe, readable report labels. */
+  function labelKatastasis(status) {
+    if (status === "ok") return "Available · complete";
+    if (status === "partial") return "Partial";
+    if (status === "missing") return "Not available";
+    return "Status unknown";
+  }
+
+  /** Shows supplied Git numstat totals separately from the existing HEAD cards. */
+  function prosthesGitDiafores(goneas) {
+    const report = dedomena.git_diafores;
+    if (!report || typeof report !== "object" || Array.isArray(report)) return;
+    const panel = asto(goneas, "section", "git-changes-panel");
+    asto(panel, "p", "eyebrow", "FIRST-PARENT HISTORY");
+    asto(panel, "h2", "", "Git changes in first-parent history");
+    const status = keimeno(report, "katastasi", "unknown");
+    asto(panel, "span", "supplied-status", labelKatastasis(status));
+    const period = report.periodos;
+    if (period && typeof period === "object") {
+      const start = keimeno(period, "apo");
+      const end = keimeno(period, "eos");
+      if (start || end)
+        asto(panel, "p", "git-period", `Author-date period: ${start || "open"} to ${end || "open"} · ${keimeno(period, "zoni", "timezone not recorded")}.`);
+    }
+    const filter = report.filtro;
+    if (filter && typeof filter === "object")
+      asto(panel, "p", "git-author-filter", `Author filter: ${keimeno(filter, "author") || "all authors"}.`);
+    const totals = report.synola && typeof report.synola === "object" ? report.synola : {};
+    const summary = asto(panel, "div", "git-change-totals");
+    [
+      ["additions", "additions"],
+      ["deletions", "deletions"],
+      ["file_changes", "file changes"],
+      ["binary_file_changes", "binary file changes"],
+    ].forEach(([field, label]) => {
+      const value = status === "ok" || status === "partial" ? metrikoAkeraios(totals[field]) : null;
+      asto(summary, "p", `git-change-total git-${field}`, `${value === null ? "Not recorded" : arithmos(value)} ${label}`);
+    });
+    const coverage = report.kalypsi;
+    if (coverage && typeof coverage === "object") {
+      const readable = metrikoAkeraios(coverage.epityxeis);
+      const repositories = metrikoAkeraios(coverage.apothikies);
+      if (readable !== null || repositories !== null)
+        asto(panel, "p", "git-coverage", `${readable === null ? "Not recorded" : arithmos(readable)} of ${repositories === null ? "unknown" : arithmos(repositories)} repositories readable.`);
+      const notes = Array.isArray(coverage.simeioseis) ? coverage.simeioseis.filter((note) => typeof note === "string") : [];
+      notes.forEach((note) => asto(panel, "p", "git-note", note));
+    }
+    const rows = Array.isArray(report.apothikies) ? report.apothikies : [];
+    rows.forEach((row) => {
+      if (!row || typeof row !== "object") return;
+      const card = asto(panel, "article", "git-repository-card");
+      asto(card, "h3", "", keimeno(row, "onoma", "Repository"));
+      [
+        ["commits", "commits"],
+        ["merge_commits", "merge commits"],
+        ["additions", "additions"],
+        ["deletions", "deletions"],
+        ["file_changes", "file changes"],
+        ["binary_file_changes", "binary file changes"],
+      ].forEach(([field, label]) => {
+        const value = status === "ok" || status === "partial" ? metrikoAkeraios(row[field]) : null;
+        asto(card, "p", `git-repository-metric git-${field}`, `${label}: ${value === null ? "Not recorded" : arithmos(value)}`);
+      });
+    });
+    asto(panel, "p", "git-semantics", "Counts use first-parent history. Merge commits are compared with their first parent; renames are disabled and count as a deletion plus an addition. Binary files count as file changes, not line additions or deletions. These history deltas are separate from selected repository HEAD commit and tracked-file totals.");
+    const semantics = report.semantics;
+    const limit = semantics && typeof semantics === "object" ? metrikoAkeraios(semantics.limit_commits_per_repository) : null;
+    if (limit !== null)
+      asto(panel, "p", "git-limit", `${arithmos(limit)} commit limit per repository; capped reports are partial.`);
+  }
+
+  /** Renders distinct date aggregates as a bounded, accessible calendar grid. */
+  function prosthesHeatmapImeron(goneas, imeresData) {
+    const karta = asto(goneas, "article", "activity-calendar-card");
+    asto(karta, "h3", "", "Prompts by day");
+    asto(karta, "p", "metric-caption", "Recorded user prompt counts by report date.");
+    const imeres = Array.isArray(imeresData) ? imeresData : [];
+    const byDate = new Map();
+    imeres.forEach((grammi) => {
+      if (!grammi || typeof grammi !== "object") return;
+      const imerominia = keimeno(grammi, "imerominia");
+      if (!parsiImerominias(imerominia) || byDate.has(imerominia)) return;
+      const count = metrikoAkeraios(grammi.prompts);
+      if (count !== null) byDate.set(imerominia, count);
+    });
+    const imerominies = [...byDate.keys()].sort();
+    if (!imerominies.length) {
+      asto(karta, "p", "empty-card", "No valid dated prompt aggregates were recorded.");
+      goneas.append(karta);
+      return;
+    }
+    const latest = parsiImerominias(imerominies[imerominies.length - 1]);
+    const earliest = parsiImerominias(imerominies[0]);
+    const daysApart = Math.floor((latest - earliest) / 86400000) + 1;
+    const displayStart = new Date(latest.getTime());
+    if (daysApart > MAX_ACTIVITY_CALENDAR_DAYS)
+      displayStart.setUTCDate(displayStart.getUTCDate() - MAX_ACTIVITY_CALENDAR_DAYS + 1);
+    else displayStart.setTime(earliest.getTime());
+    const shownDays = Math.min(daysApart, MAX_ACTIVITY_CALENDAR_DAYS);
+    const startOffset = (displayStart.getUTCDay() + 6) % 7;
+    const heatmap = asto(karta, "div", "activity-heatmap");
+    heatmap.setAttribute("role", "group");
+    heatmap.setAttribute("aria-label", "Recorded daily prompt counts");
+    ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].forEach((weekday) => {
+      asto(heatmap, "span", "activity-weekday", weekday).setAttribute(
+        "aria-hidden",
+        "true",
+      );
+    });
+    for (let blank = 0; blank < startOffset; blank += 1)
+      asto(heatmap, "span", "activity-day is-outside", "").setAttribute(
+        "aria-hidden",
+        "true",
+      );
+    const maxCount = Math.max(...byDate.values(), 1);
+    for (let offset = 0; offset < shownDays; offset += 1) {
+      const day = new Date(displayStart.getTime());
+      day.setUTCDate(day.getUTCDate() + offset);
+      const dateKey = day.toISOString().slice(0, 10);
+      const count = byDate.get(dateKey);
+      const cell = asto(
+        heatmap,
+        "span",
+        `activity-day${count === undefined ? " is-unrecorded" : ""}`,
+        "",
+      );
+      cell.dataset.date = dateKey;
+      cell.setAttribute("role", "img");
+      cell.setAttribute(
+        "aria-label",
+        count === undefined
+          ? `${dateKey}: no recorded prompt aggregate`
+          : `${dateKey}: ${arithmos(count)} recorded prompts`,
+      );
+      cell.title = cell.getAttribute("aria-label");
+      if (count !== undefined)
+        cell.style.setProperty(
+          "--activity-level",
+          String(count === 0 ? 0.12 : Math.max(0.25, count / maxCount)),
+        );
+    }
+    const legend = asto(
+      karta,
+      "p",
+      "activity-legend",
+      "Fewer → more recorded prompts",
+    );
+    [0.18, 0.52, 0.95].forEach((level) => {
+      const swatch = asto(legend, "span", "activity-legend-swatch");
+      swatch.style.setProperty("--activity-level", String(level));
+      swatch.setAttribute("aria-hidden", "true");
+    });
+    if (daysApart > MAX_ACTIVITY_CALENDAR_DAYS)
+      asto(
+        karta,
+        "p",
+        "activity-truncation",
+        `Showing the latest ${MAX_ACTIVITY_CALENDAR_DAYS} days of ${arithmos(imerominies.length)} recorded dates.`,
+      );
+    goneas.append(karta);
+  }
+
+  /** Draws per-hour recorded prompts and identifies the highest observed bucket. */
+  function prosthesKatanomiOrias(goneas, oraData, zoniData) {
+    const karta = asto(goneas, "article", "activity-hourly-card");
+    asto(karta, "h3", "", "Prompts by hour");
+    asto(
+      karta,
+      "p",
+      "metric-caption",
+      `Report timezone: ${typeof zoniData === "string" ? zoniData : "not recorded"}.`,
+    );
+    const hours = new Map();
+    (Array.isArray(oraData) ? oraData : []).forEach((grammi) => {
+      if (!grammi || typeof grammi !== "object") return;
+      const hour = grammi.ora;
+      const count = metrikoAkeraios(grammi.prompts);
+      if (!Number.isInteger(hour) || hour < 0 || hour >= HOURS_PER_DAY || count === null || hours.has(hour))
+        return;
+      hours.set(hour, count);
+    });
+    const rows = [...hours.entries()].sort(([hourA], [hourB]) => hourA - hourB);
+    if (!rows.length) {
+      asto(karta, "p", "empty-card", "Hourly prompt counts were not recorded.");
+      goneas.append(karta);
+      return;
+    }
+    const peak = rows.reduce(
+      (current, row) => (row[1] > current[1] ? row : current),
+      rows[0],
+    );
+    const peakLabel = peak[1] > 0 ? `${String(peak[0]).padStart(2, "0")}:00` : "Not recorded";
+    asto(
+      karta,
+      "p",
+      "activity-peak",
+      peak[1] > 0
+        ? `Peak recorded hour: ${peakLabel} · ${arithmos(peak[1])} prompts.`
+        : "Peak recorded hour: Not recorded.",
+    );
+    const bars = asto(karta, "div", "activity-hours");
+    bars.setAttribute("role", "list");
+    bars.setAttribute("aria-label", "Recorded prompt counts by local report hour");
+    const maximum = Math.max(...rows.map((row) => row[1]), 1);
+    rows.forEach(([hour, count]) => {
+      const row = asto(bars, "div", "activity-hour");
+      row.dataset.hour = String(hour);
+      row.setAttribute("role", "listitem");
+      row.setAttribute(
+        "aria-label",
+        `${String(hour).padStart(2, "0")}:00: ${arithmos(count)} recorded prompts`,
+      );
+      asto(row, "span", "activity-hour-label", `${String(hour).padStart(2, "0")}:00`);
+      const track = asto(row, "span", "activity-hour-track");
+      const fill = asto(track, "span", "activity-hour-fill");
+      fill.style.width = `${(count / maximum) * 100}%`;
+      asto(row, "span", "activity-hour-count", arithmos(count));
+    });
+    goneas.append(karta);
+  }
+
+  /** Shows only observed test summaries, tool outputs, and explicit exits. */
+  function prosthesSynopsiApotelesmaton(goneas, metrikaErgasias) {
+    const karta = asto(goneas, "article", "activity-test-summary");
+    asto(karta, "h3", "", "Checks and observed span");
+    const summary = metrikaErgasias.test_summary;
+    if (summary && typeof summary === "object" && summary.status === "observed") {
+      const passed = metrikoAkeraios(summary.passed);
+      const failed = metrikoAkeraios(summary.failed);
+      const skipped = metrikoAkeraios(summary.skipped);
+      const anamenomena = metrikoAkeraios(summary.todo);
+      asto(
+        karta,
+        "p",
+        "activity-test-counts",
+        `${passed === null ? "Not recorded" : arithmos(passed)} passed · ${failed === null ? "Not recorded" : arithmos(failed)} failed · ${skipped === null ? "Not recorded" : arithmos(skipped)} skipped${anamenomena === null ? "" : ` · ${arithmos(anamenomena)} TODO`}`,
+      );
+    } else asto(karta, "p", "activity-test-counts is-unknown", "Test results not recorded.");
+    asto(
+      karta,
+      "p",
+      "activity-test-definition",
+      "Test counts come from recognized summaries; tool-result totals count recorded output events. Command exit counts require explicit exit records and are reported separately. Tool output is evidence, not proof of overall completion or code quality.",
+    );
+    const sources = Array.isArray(metrikaErgasias.sources)
+      ? metrikaErgasias.sources
+      : [];
+    const results = sources.reduce((total, source) => {
+      const count = source && typeof source === "object" ? metrikoAkeraios(source.tool_results) : null;
+      return count === null ? total : total + count;
+    }, 0);
+    const observedResults = sources.some(
+      (source) => source && typeof source === "object" && metrikoAkeraios(source.tool_results) !== null,
+    );
+    asto(
+      karta,
+      "p",
+      "activity-tool-results",
+      `${observedResults ? `${arithmos(results)} recorded tool results` : "Tool results: not recorded"} · separate from test summaries.`,
+    );
+    const episodes = Array.isArray(metrikaErgasias.epeisodia)
+      ? metrikaErgasias.epeisodia
+      : [];
+    const episodesTruncated = metrikaErgasias.episodes_truncated === true;
+    const exits = episodes.reduce(
+      (total, episode) => {
+        if (!episode || typeof episode !== "object") return total;
+        const success = metrikoAkeraios(episode.exit_success);
+        const failure = metrikoAkeraios(episode.exit_failure);
+        if (success !== null) {
+          total.success += success;
+          total.observed = true;
+        }
+        if (failure !== null) {
+          total.failure += failure;
+          total.observed = true;
+        }
+        return total;
+      },
+      { success: 0, failure: 0, observed: false },
+    );
+    const exitCoverage = episodesTruncated
+      ? `Only ${arithmos(metrikoAkeraios(metrikaErgasias.episodes_included) ?? episodes.length)} of ${arithmos(metrikoAkeraios(metrikaErgasias.episodes_eligible) ?? episodes.length)} included episode summaries are counted.`
+      : "Counts use explicit exit records only.";
+    asto(
+      karta,
+      "p",
+      "activity-exits",
+      exits.observed
+        ? `Observed command exits: ${arithmos(exits.success)} success · ${arithmos(exits.failure)} failure. ${exitCoverage}`
+        : "Observed command exits: Not recorded from explicit exit-code records.",
+    );
+    const spanMinutes = metrikoAkeraios(metrikaErgasias.interval_estimate_minutes);
+    const spanObserved = metrikaErgasias.interval_estimate_status === "observed_pairs_only";
+    const span = asto(karta, "p", "activity-span");
+    span.textContent = spanObserved && spanMinutes !== null
+      ? `Observed event span (estimated): ${Math.floor(spanMinutes / 60)}h ${spanMinutes % 60}m. This is not human PC time or active coding time.`
+      : "Observed event span (estimated): Not recorded; timestamps do not bound a measurable span. This is not human PC time.";
+    goneas.append(karta);
+  }
+
   /** Displays ranked tool counts from the source-filtered aggregate list. */
   function prosthesGrafimaErgaleion(goneas) {
     const grammes = filtrismenaErgaleia()
@@ -918,7 +1520,9 @@
             "A rules-based score is available; inspect its evidence.",
           )
         : analisiTopiki?.katastasi === "failed"
-          ? "Local analysis failed; no derived score is shown."
+          ? analisiTopiki.methodos === "cloud"
+            ? `Cloud coaching failed; no cloud-generated coaching is shown.${analisiTopiki.efarmostike === "rules" ? " Rules-based observations remain available." : ""}`
+            : "Local analysis failed; no derived score is shown."
           : (dedomena.axiologisi && keimeno(dedomena.axiologisi, "aitia")) ||
             "Score unavailable. A validated rubric and enough verified evidence are required before a score can be shown.",
     );
@@ -981,6 +1585,25 @@
         : null;
     if (!analisiTopiki)
       minimataKalypsis.push("Local analysis status was not recorded.");
+    else if (analisiTopiki.methodos === "cloud") {
+      const consent = analisiTopiki.cloud_opt_in === true
+        ? "explicitly opted in"
+        : analisiTopiki.cloud_opt_in === false
+          ? "not opted in"
+          : "explicit cloud opt-in not recorded";
+      const state = analisiTopiki.katastasi === "failed"
+        ? `failed · no cloud-generated coaching is shown${analisiTopiki.efarmostike === "rules" ? " · rules-based observations remain available" : ""}`
+        : analisiTopiki.katastasi === "ok"
+          ? "complete"
+          : "status not recorded";
+      const provider = keimeno(analisiTopiki, "provider");
+      const model = keimeno(analisiTopiki, "model_id", keimeno(analisiTopiki, "modelo"));
+      const endpoint = keimeno(analisiTopiki, "endpoint_host");
+      const details = [provider, model, endpoint ? `endpoint ${endpoint}` : ""].filter(Boolean);
+      minimataKalypsis.push(
+        `Cloud coaching · ${consent} · ${state}${details.length ? ` · ${details.join(" · ")}` : ""}. No browser connection is made by this report.`,
+      );
+    }
     else if (analisiTopiki.methodos === "rules")
       minimataKalypsis.push("Rules-based coaching · candidate observations.");
     else if (analisiTopiki.katastasi === "failed") {
@@ -1137,6 +1760,272 @@
     });
   }
 
+  /** Displays bounded observed outcomes and their exact source citations. */
+  function prosthesEkdoseisErgasias(
+    goneas,
+    analysis = dedomena.epeisodia_ergasias,
+    nativeChannel = false,
+  ) {
+    if (!analysis || typeof analysis !== "object" || Array.isArray(analysis)) return;
+    const panel = asto(
+      goneas,
+      "section",
+      nativeChannel ? "outcomes-panel native-outcomes-panel" : "outcomes-panel",
+    );
+    asto(
+      panel,
+      "p",
+      "eyebrow",
+      nativeChannel ? "CODEX NATIVE · RECORDED COMMAND OUTCOMES" : "RECORDED CHECK OUTCOMES",
+    );
+    asto(
+      panel,
+      "h2",
+      "",
+      nativeChannel ? "Codex native command checks." : "What the recorded checks showed.",
+    );
+    if (nativeChannel)
+      asto(
+        panel,
+        "p",
+        "outcomes-coverage",
+        "Separate native command channel; these observations are not combined with legacy tool results or global check totals.",
+      );
+    const coverage = analysis.kalypsi;
+    if (coverage && typeof coverage === "object" && coverage.perikopi === true)
+      asto(panel, "p", "outcomes-coverage", "This episode sample is truncated; shown observations cover only the included subset.");
+    const observations = Array.isArray(analysis.paratiriseis)
+      ? analysis.paratiriseis
+      : [];
+    if (!observations.length) {
+      asto(
+        panel,
+        "p",
+        "empty-card outcome-empty",
+        "No outcome observations are available. Missing evidence stays unknown.",
+      );
+      asto(
+        panel,
+        "p",
+        "outcomes-limit",
+        "Recorded check outcomes do not establish task completion or code quality, and do not assign human blame.",
+      );
+      return;
+    }
+    const labels = {
+      observed_success: "Recorded check success",
+      observed_failure: "Recorded check failure",
+      mixed: "Mixed recorded checks",
+      unknown: "Outcome unknown",
+    };
+    const cards = asto(panel, "div", "outcomes-grid");
+    observations.slice(0, MEGISTO_DEIGMATA).forEach((observation, index) => {
+      if (!observation || typeof observation !== "object") return;
+      const rawStatus = keimeno(observation, "katastasi", "unknown");
+      const status = Object.hasOwn(labels, rawStatus) ? rawStatus : "unknown";
+      const karta = asto(cards, "article", `outcome-card outcome-${status}`);
+      karta.dataset.status = status;
+      const source = keimeno(observation, "pigi", nativeChannel ? "Codex native" : "Source not recorded");
+      const session = keimeno(observation, "synedria", `Episode ${index + 1}`);
+      asto(karta, "span", `outcome-status outcome-status-${status}`, labels[status]);
+      asto(karta, "h3", "", session);
+      asto(karta, "p", "outcome-source", source);
+      asto(
+        karta,
+        "p",
+        "outcome-result",
+        keimeno(observation, "apotelesma", "Outcome is unknown from the available evidence."),
+      );
+      const counts = observation.metrisi;
+      if (counts && typeof counts === "object") {
+        const knownCounts = ["tests_passed", "tests_failed", "tests_skipped"]
+          .filter((key) => metrikoAkeraios(counts[key]) !== null)
+          .map((key) => `${key.replace("tests_", "")} ${arithmos(counts[key])}`);
+        if (knownCounts.length)
+          asto(karta, "p", "outcome-counts", knownCounts.join(" · "));
+      }
+      const citations = Array.isArray(observation.tekmiria)
+        ? observation.tekmiria.slice(0, MEGISTO_DEIGMATA)
+        : [];
+      const citationCoverage = observation.kalypsi_tekmirion;
+      if (
+        citationCoverage &&
+        typeof citationCoverage === "object" &&
+        citationCoverage.truncated === true
+      )
+        asto(
+          karta,
+          "p",
+          "outcome-citation-limit",
+          "Evidence citations are truncated; aggregate counters alone do not verify an outcome.",
+        );
+      citations.forEach((citation) => {
+        if (!citation || typeof citation !== "object") return;
+        const quote = asto(
+          karta,
+          "blockquote",
+          "outcome-citation",
+          keimeno(citation, "apospasma", "Evidence excerpt unavailable."),
+        );
+        const citationSource = keimeno(citation, "pigi", source);
+        const citationSession = keimeno(citation, "synedria", session);
+        const locator = keimeno(citation, "locator", "record locator unavailable");
+        const exitCode =
+          typeof citation.kodikos_exodou === "string" ||
+          typeof citation.kodikos_exodou === "number"
+            ? ` · exit code ${String(citation.kodikos_exodou)}`
+            : "";
+        asto(
+          quote,
+          "cite",
+          "",
+          `${citationSource} · ${citationSession} · ${locator}${exitCode}`,
+        );
+      });
+      if (!citations.length)
+        asto(
+          karta,
+          "p",
+          "outcome-unknown-note",
+          "No eligible tool-result or exit evidence is cited for this episode.",
+        );
+    });
+    asto(
+      panel,
+      "p",
+      "outcomes-limit",
+      "Recorded check outcomes do not establish task completion or code quality, and do not assign human blame.",
+    );
+  }
+
+  /** Renders report compatibility and nullable progress deltas without guessing. */
+  function prosthesSygkrisiProodou(goneas) {
+    const comparison = dedomena.sygkrisi;
+    if (!comparison || typeof comparison !== "object" || Array.isArray(comparison))
+      return;
+    const panel = asto(goneas, "section", "comparison-panel");
+    asto(panel, "p", "eyebrow", "REPORT COMPARISON");
+    asto(panel, "h2", "", "Progress, with the limits shown.");
+    const globalStatus = keimeno(comparison, "katastasi", "missing");
+    const labels = {
+      compatible: "Compatible",
+      overlapping: "Overlapping",
+      incompatible: "Incompatible",
+      missing: "Not comparable",
+      partial: "Partial coverage",
+      truncated: "Truncated coverage",
+    };
+    asto(
+      panel,
+      "span",
+      "comparison-status",
+      labels[globalStatus] || "Comparison status unknown",
+    ).dataset.status = globalStatus;
+    const caveat =
+      globalStatus === "overlapping"
+        ? "The report periods overlap. Deltas are withheld to avoid double-counting activity."
+        : globalStatus === "compatible"
+          ? "Reports are compatible and non-overlapping. Activity deltas do not establish skill, seniority, or causality."
+          : `Compatibility status is ${labels[globalStatus] || "unknown"}; deltas are withheld where comparison is unsafe.`;
+    asto(panel, "p", "comparison-caveat", caveat);
+
+    const factors = comparison.symvatotita;
+    if (factors && typeof factors === "object" && !Array.isArray(factors)) {
+      const factorList = asto(panel, "div", "comparison-factors");
+      Object.entries(factors).forEach(([key, factor]) => {
+        if (!factor || typeof factor !== "object" || Array.isArray(factor)) return;
+        const row = asto(factorList, "p", "comparison-factor");
+        row.dataset.factor = key;
+        const factorStatus = keimeno(factor, "katastasi", "unknown");
+        const factorName = key.replaceAll("_", " ");
+        asto(row, "strong", "", `${factorName}: ${factorStatus}`);
+        asto(row, "span", "", keimeno(factor, "aitia", "Reason not recorded."));
+      });
+    }
+
+    const metrics = comparison.metrika;
+    const metricLabels = {
+      "synola.synedries": "Recorded sessions",
+      "synola.rizikes": "Root sessions",
+      "synola.ypopraktores": "Recorded subagents",
+      "synola.minimata_xristi": "User prompts",
+      "synola.apantiseis": "Assistant responses",
+      "synola.kliseis_ergaleion": "Tool calls",
+      "synola.tokens": "Recorded tokens",
+      "synola.commits": "Recorded commits",
+      "synola.imeres": "Active days",
+      "episodia.episodes_total": "Observed work episodes",
+      "episodia.episodes_observed_success": "Episodes with successful checks",
+      "episodia.episodes_observed_failure": "Episodes with failed checks",
+      "episodia.tests_passed": "Observed tests passed",
+      "episodia.tests_failed": "Observed tests failed",
+      "episodia.tests_skipped": "Observed tests skipped",
+      "episodia.workflow_cues": "Recorded workflow observations",
+    };
+    const metricRows =
+      metrics && typeof metrics === "object" && !Array.isArray(metrics)
+        ? Object.entries(metrics).filter(
+            ([, value]) => value && typeof value === "object" && !Array.isArray(value),
+          )
+        : [];
+    if (!metricRows.length) {
+      asto(panel, "p", "empty-card comparison-empty", "No comparison metrics are available.");
+      return;
+    }
+    const cards = asto(panel, "div", "comparison-grid");
+    metricRows.slice(0, MAX_COMPARISON_CARDS).forEach(([key, metric]) => {
+      const metricStatus = keimeno(metric, "katastasi", "unknown");
+      const status = globalStatus === "compatible" ? metricStatus : globalStatus;
+      const card = asto(cards, "article", "comparison-card");
+      card.dataset.metric = key;
+      card.dataset.status = status;
+      asto(card, "h3", "", metricLabels[key] || key.replace(/[._]/g, " "));
+      asto(card, "span", "comparison-metric-status", labels[status] || "Unknown");
+      const current = Number.isFinite(metric.trexousa) ? metric.trexousa : null;
+      const baseline = Number.isFinite(metric.proigoumeni)
+        ? metric.proigoumeni
+        : null;
+      asto(
+        card,
+        "p",
+        "comparison-values",
+        `Current ${current === null ? "Not recorded" : arithmos(current)} · Previous ${baseline === null ? "Not recorded" : arithmos(baseline)}`,
+      );
+      const validStatus =
+        globalStatus === "compatible" &&
+        (metricStatus === "compatible" || metricStatus === "partial");
+      const rawDelta = Number.isFinite(metric.delta) ? metric.delta : null;
+      const delta = validStatus && current !== null && baseline !== null ? rawDelta : null;
+      asto(
+        card,
+        "p",
+        `comparison-delta${delta === null ? " is-unavailable" : ""}`,
+        delta === null
+          ? "Delta unavailable"
+          : `Delta ${delta > 0 ? "+" : ""}${arithmos(delta)}`,
+      );
+      const rawPercent = Number.isFinite(metric.pososto) ? metric.pososto : null;
+      const percent =
+        delta === null || baseline === 0 || rawPercent === null ? null : rawPercent;
+      asto(
+        card,
+        "p",
+        `comparison-percent${percent === null ? " is-unavailable" : ""}`,
+        percent === null
+          ? baseline === 0 && delta !== null
+            ? "Percent change unavailable · zero baseline"
+            : "Percent change unavailable"
+          : `Percent change ${percent > 0 ? "+" : ""}${arithmos(percent)}%`,
+      );
+      asto(card, "p", "comparison-reason", keimeno(metric, "aitia", "Reason not recorded."));
+    });
+    if (Array.isArray(comparison.periorismoi))
+      comparison.periorismoi
+        .filter((limit) => typeof limit === "string")
+        .slice(0, 3)
+        .forEach((limit) => asto(panel, "p", "comparison-limit", limit));
+  }
+
   /** Draws all cards for the selected category from the shared report data. */
   function emfaniseExplore() {
     const riza = stoixeia("explore-cards");
@@ -1171,6 +2060,7 @@
     stoixeia("explore-subtitle").textContent = `${simeiosi} ${eurosGit()}.`;
     const enotita = katastasi.enotita;
     if (enotita === "overview") {
+      prosthesAnagnorisi(riza);
       prosthesGrafimaDrastiriotitas(riza);
       prosthesGrafimaErgaleion(riza);
       synolikaMetrika().forEach((grammi) =>
@@ -1226,6 +2116,7 @@
         synolikaMetrika()[4],
         synolikaMetrika()[8],
       ].forEach((grammi) => prosthesMetriko(riza, grammi));
+      prosthesAnalysiDrastiriotitas(riza);
     }
     if (enotita === "agents") {
       prosthesMetriko(riza, synolikaMetrika()[1]);
@@ -1248,6 +2139,7 @@
     }
     if (enotita === "projects") {
       prosthesMetriko(riza, synolikaMetrika()[7]);
+      prosthesGitDiafores(riza);
       if (!erga.length)
         asto(
           riza,
@@ -1275,6 +2167,11 @@
     if (enotita === "growth") {
       prosthesAxiologisi(riza);
       prosthesDiastaseis(riza);
+      prosthesEkdoseisErgasias(riza);
+      const nativeOutcomes = dedomena.codex_native && dedomena.codex_native.epeisodia_ergasias;
+      if (nativeOutcomes && typeof nativeOutcomes === "object" && !Array.isArray(nativeOutcomes))
+        prosthesEkdoseisErgasias(riza, nativeOutcomes, true);
+      prosthesSygkrisiProodou(riza);
       prosthesEyrimata(riza);
       prosthesDeigmata(riza);
     }
@@ -1529,10 +2426,15 @@
     const arxeioBlob = new Blob([new XMLSerializer().serializeToString(stoixeioSvg)], {
       type: "image/svg+xml;charset=utf-8",
     });
+    katevaseArxeioKoinopoiisis(arxeioBlob, "devrar-share-card.svg");
+  }
+
+  /** Downloads an already generated, local aggregate artifact. */
+  function katevaseArxeioKoinopoiisis(arxeioBlob, onoma) {
     const urlTopikisLipsis = URL.createObjectURL(arxeioBlob);
     const syndesmos = ftiakse("a", "");
     syndesmos.href = urlTopikisLipsis;
-    syndesmos.download = "devrar-share-card.svg";
+    syndesmos.download = onoma;
     document.body.append(syndesmos);
     syndesmos.click();
     syndesmos.remove();
@@ -1540,6 +2442,33 @@
       () => URL.revokeObjectURL(urlTopikisLipsis),
       KATYSTERISI_ANAKLISIS_BLOB_MS,
     );
+  }
+
+  /** Rasterizes the exact allowlisted preview locally; no report DOM is captured. */
+  async function ftiaxePngKoinopoiisis(stoixeioSvg) {
+    const arxeioSvg = new Blob([new XMLSerializer().serializeToString(stoixeioSvg)], {
+      type: "image/svg+xml;charset=utf-8",
+    });
+    const diadromi = URL.createObjectURL(arxeioSvg);
+    try {
+      const eikona = await new Promise((epityxia, apotyxia) => {
+        const apotelesma = new Image();
+        apotelesma.onload = () => epityxia(apotelesma);
+        apotelesma.onerror = () => apotyxia(new Error("SVG rasterization failed"));
+        apotelesma.src = diadromi;
+      });
+      const kamvas = document.createElement("canvas");
+      kamvas.width = PLATOS_SHARE_PNG;
+      kamvas.height = YPSOS_SHARE_PNG;
+      const sxedio = kamvas.getContext("2d");
+      if (!sxedio) throw new Error("Canvas is unavailable");
+      sxedio.drawImage(eikona, 0, 0, PLATOS_SHARE_PNG, YPSOS_SHARE_PNG);
+      const arxeio = await new Promise((epityxia) => kamvas.toBlob(epityxia, "image/png"));
+      if (!arxeio) throw new Error("PNG encoding failed");
+      return arxeio;
+    } finally {
+      URL.revokeObjectURL(diadromi);
+    }
   }
 
   /** Lets the user inspect or cancel an aggregate-only export before download. */
@@ -1572,6 +2501,26 @@
       apothikefseKartaKoinopoiisis(karta);
       kleiseLeptomereia();
     });
+    const apothikefsiPng = asto(xeiristiria, "button", "share-button", "Save PNG");
+    apothikefsiPng.id = "save-share-png";
+    apothikefsiPng.type = "button";
+    const sfalmaEksagogis = asto(soma, "p", "dialog-description", "");
+    sfalmaEksagogis.id = "share-error";
+    sfalmaEksagogis.setAttribute("role", "status");
+    apothikefsiPng.addEventListener("click", async () => {
+      apothikefsiPng.disabled = true;
+      sfalmaEksagogis.textContent = "Preparing your PNG…";
+      try {
+        const arxeio = await ftiaxePngKoinopoiisis(karta);
+        if (!stoixeia("detail-dialog").open || !soma.contains(apothikefsiPng)) return;
+        katevaseArxeioKoinopoiisis(arxeio, "devrar-share-card.png");
+        kleiseLeptomereia();
+      } catch (sfalma) {
+        sfalmaEksagogis.textContent = "PNG export failed in this browser. You can still save SVG.";
+      } finally {
+        apothikefsiPng.disabled = false;
+      }
+    });
     stoixeia("detail-dialog").showModal();
     akyrosi.focus();
   }
@@ -1580,6 +2529,12 @@
   function syndeseXeiristiria() {
     stoixeia("period-text").textContent = periodos();
     stoixeia("demo-banner").hidden = dedomena.leitourgia !== "demo";
+    stoixeia("appearance-select").addEventListener("change", (symvan) => {
+      const epilegmenoThema =
+        symvan.currentTarget.value === "blue-hour" ? "blue-hour" : "original";
+      document.body.dataset.theme = epilegmenoThema;
+      symvan.currentTarget.value = epilegmenoThema;
+    });
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) pausaIstoria();
     });
