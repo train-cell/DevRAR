@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="dark" />
+    <meta http-equiv="Content-Security-Policy" content="__DEVRAR_CSP__" />
+    <title>DevRAR — your developer replay</title>
+    <style>
+      __DEVRAR_CSS__
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand" href="#story" aria-label="DevRAR home"
+          ><span class="brand-mark">D</span
+          ><span
+            >DEV<span class="brand-light">RAR</span
+            ><small>YOUR WORK IN REVIEW</small></span
+          ></a
+        >
+        <div class="rail-label">YOUR REPORT</div>
+        <nav class="nav-list" aria-label="Explore sections">
+          <button class="nav-item is-active" data-view="overview">
+            <span class="nav-glyph">◉</span> Overview
+          </button>
+          <button class="nav-item" data-view="tools">
+            <span class="nav-glyph">⌘</span> Tools &amp; models
+          </button>
+          <button class="nav-item" data-view="activity">
+            <span class="nav-glyph">▦</span> Activity
+          </button>
+          <button class="nav-item" data-view="agents">
+            <span class="nav-glyph">✳</span> Agents
+          </button>
+          <button class="nav-item" data-view="projects">
+            <span class="nav-glyph">◈</span> Projects
+          </button>
+          <button class="nav-item" data-view="growth">
+            <span class="nav-glyph">↗</span> Growth
+          </button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="debra-mini">
+            <span class="debra-orb">D</span>
+            <p>
+              <b>Debra says</b><br /><span id="side-note"
+                ><span id="debra-quote">Your work has a shape.</span></span
+              >
+            </p>
+          </div>
+          <div class="offline-mark"><span></span> PRIVATE · OFFLINE</div>
+        </div>
+      </aside>
+      <main class="main-area">
+        <div class="demo-banner" id="demo-banner" hidden>
+          <span class="demo-dot"></span> DEMO REPORT · SYNTHETIC DATA
+        </div>
+        <header class="topbar">
+          <div class="period-label">
+            <span class="eyebrow">THE DEVRAR REPLAY</span
+            ><span id="period-text">Your developer year</span>
+          </div>
+          <div class="top-actions">
+            <span class="privacy-pill"
+              ><span></span> Stored on this device</span
+            >
+            <div class="view-switch" role="tablist" aria-label="Report view">
+              <button
+                id="story-tab"
+                class="switch-button is-selected"
+                role="tab"
+                aria-selected="true"
+              >
+                Story</button
+              ><button
+                id="explore-tab"
+                class="switch-button"
+                role="tab"
+                aria-selected="false"
+              >
+                Explore
+              </button>
+            </div>
+          </div>
+        </header>
+        <div
+          class="coverage-alert"
+          id="coverage-alert"
+          role="status"
+          aria-live="polite"
+          hidden
+        ></div>
+        <section class="story-view" id="story-view" aria-label="Your story">
+          <div class="story-stage" id="story-stage" aria-live="polite">
+            <div class="scene-orbit orbit-one"></div>
+            <div class="scene-orbit orbit-two"></div>
+            <div class="scene-noise"></div>
+            <div class="scene-content" id="scene-content"></div>
+            <button class="scene-detail" id="scene-detail" type="button">
+              <span id="scene-detail-label">Explore this stat</span
+              ><span aria-hidden="true">↗</span>
+            </button>
+          </div>
+          <div class="story-controls">
+            <div class="control-left">
+              <button
+                class="icon-button"
+                id="prev-scene"
+                type="button"
+                aria-label="Previous scene"
+              >
+                ←</button
+              ><button
+                class="icon-button"
+                id="replay-scene"
+                type="button"
+                aria-label="Replay scene"
+              >
+                ↺
+              </button>
+            </div>
+            <div
+              class="story-progress"
+              id="story-progress"
+              aria-label="Story chapters"
+            ></div>
+            <div class="control-right">
+              <button
+                class="play-button"
+                id="play-story"
+                type="button"
+                aria-label="Play story"
+              >
+                ▶ <span>Play</span></button
+              ><button
+                class="icon-button next-button"
+                id="next-scene"
+                type="button"
+                aria-label="Next scene"
+              >
+                →
+              </button>
+            </div>
+          </div>
+          <p
+            class="roast-note"
+            id="roast-note"
+            role="note"
+            aria-label="Debra's optional observation"
+            hidden
+          ></p>
+        </section>
+        <section
+          class="explore-view"
+          id="explore-view"
+          hidden
+          aria-label="Explore report"
+        >
+          <div class="explore-heading">
+            <div>
+              <span class="eyebrow">THE RECEIPTS</span>
+              <h1 id="explore-title">Your year, in detail.</h1>
+              <p id="explore-subtitle">
+                Every number has a source. Pick a card to see how it was
+                counted.
+              </p>
+            </div>
+            <label class="filter-wrap"
+              >SOURCE
+              <select id="source-filter" aria-label="Filter by source">
+                <option value="all">All sources</option>
+              </select></label
+            >
+          </div>
+          <div
+            class="category-tabs"
+            role="tablist"
+            aria-label="Explore category"
+          >
+            <button class="category-tab is-active" data-view="overview">
+              Overview</button
+            ><button class="category-tab" data-view="tools">
+              Tools &amp; models</button
+            ><button class="category-tab" data-view="activity">Activity</button
+            ><button class="category-tab" data-view="agents">Agents</button
+            ><button class="category-tab" data-view="projects">Projects</button
+            ><button class="category-tab" data-view="growth">Growth</button>
+          </div>
+          <div id="explore-cards" class="explore-grid"></div>
+          <div class="explore-footer">
+            <span id="coverage-note">Based on recorded data</span
+            ><button id="share-card" class="share-button" type="button">
+              ↓ Save a share card
+            </button>
+          </div>
+        </section>
+        <footer class="report-footer">
+          <span>DEV<span>RAR</span> <i>·</i> Built from your local history</span
+          ><button id="footer-story" type="button">Back to Story ↗</button>
+        </footer>
+      </main>
+    </div>
+    <dialog
+      id="detail-dialog"
+      class="detail-dialog"
+      aria-labelledby="dialog-title"
+    >
+      <div class="dialog-top">
+        <span class="eyebrow">THE DETAIL</span
+        ><button
+          class="icon-button dialog-close"
+          id="close-dialog"
+          aria-label="Close details"
+        >
+          ×
+        </button>
+      </div>
+      <div id="dialog-body"></div>
+    </dialog>
+    <div id="sr-status" class="sr-only" aria-live="polite"></div>
+    <script id="devrar-data" type="application/json">
+      __DEVRAR_DATA__
+    </script>
+    <!-- prettier-ignore -->
+    <script>__DEVRAR_JS__</script>
+  </body>
+</html>
